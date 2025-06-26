@@ -19,6 +19,11 @@ CSV_PATH = os.path.join(DATA_DIR, FILENAME)
 try:
     df = pd.read_csv(CSV_PATH, sep = "\t")
     print(f" Loaded {len(df)} rows from '{FILENAME}'")
+
+    # Clip throttle and brake values from [-1, 1] to valid range [0, 1]
+    df['throttle'] = df['throttle'].clip(lower=0, upper=1)
+    df['brake_0'] = df['brake_0'].clip(lower=0, upper=1)
+
 except Exception as e:
     print(f" Failed to load CSV: {e}")
     exit()
