@@ -57,6 +57,19 @@ plt.savefig("plots/rpm_gear_vs_time.png")
 plt.show()
 
 # Plot 3: 2D Track Map
+
+# Filter out negative world positions
+# Compute distances between each point and the previous one
+dx = df['world_position_X'].diff()
+dy = df['world_position_Y'].diff()
+distance = (dx**2 + dy**2)**0.5
+
+# Find index of the largest jump
+max_jump_idx = distance.idxmax()
+
+# Option: only keep rows before that jump (tweak if needed)
+df = df.loc[:max_jump_idx - 1]
+
 plt.figure(figsize=(6, 6))
 plt.plot(df["world_position_X"], df["world_position_Y"], color="purple")
 plt.xlabel("World X Position")
