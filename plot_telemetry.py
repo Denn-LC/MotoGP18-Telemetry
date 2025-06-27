@@ -9,7 +9,6 @@ for throttle, brake, RPM, gear, and a 2D track map.
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.signal import medfilt
 
 # Configuration
 DATA_DIR = 'data'
@@ -18,37 +17,59 @@ CSV_PATH = os.path.join(DATA_DIR, FILENAME)
 
 # Load telemetry data
 try:
-    # Load from file
+    # Load CSV
     df = pd.read_csv(CSV_PATH, sep="\t")
     print(f"Loaded {len(df)} rows from '{FILENAME}'")
 
-    # Clip throttle and brake to [0, 1]
+    # Clip throttle/brake to [0, 1]
     df['throttle'] = df['throttle'].clip(lower=0, upper=1)
     df['brake_0'] = df['brake_0'].clip(lower=0, upper=1)
 
-    # Save full dataset for 2D map (unfiltered)
+    # Save unfiltered version for 2D map
     df_full = df.copy()
 
-    # Create RPM/Gear safe copy for plotting
+    # Prepare filtered copy for RPM + gear plots
     df_rpm = df.copy()
     df_rpm = df_rpm.sort_values("binIndex").drop_duplicates(subset="binIndex")
 
-    # Filter for valid RPM range
+    # Filter by valid RPM range
     df_rpm = df_rpm[(df_rpm["rpm"] > 5000) & (df_rpm["rpm"] < 17000)].copy()
 
     # Smooth RPM
     df_rpm["rpm_smooth"] = df_rpm["rpm"].rolling(window=20, center=True).mean()
     df_rpm.dropna(subset=["rpm_smooth"], inplace=True)
 
-    # Cleanup gears
-    df_rpm["gear_clean"] = df_rpm["gear"].ffill().astype(int)
-    df_rpm["gear_clean"] = df_rpm["gear_clean"].where(df_rpm["rpm_smooth"] > 5000)
-    df_rpm["gear_clean"] = df_rpm["gear_clean"].ffill()
+    # Only consider valid gears (exclude -1 or 0)
+    df_rpm = df_rpm[df_rpm["gear"] > 0].copy()
+
+    # Gear debouncing function
+    def debounce_gear(series, hold_threshold=5):
+        debounced = []
+        last_valid = None
+        buffer = []
+
+        for gear in series:
+            if gear == last_valid:
+                debounced.extend([last_valid] * len(buffer))
+                buffer.clear()
+                debounced.append(gear)
+            else:
+                buffer.append(gear)
+                if len(buffer) >= hold_threshold:
+                    last_valid = gear
+                    debounced.extend([last_valid] * len(buffer))
+                    buffer.clear()
+        debounced.extend([last_valid] * len(buffer))
+        return pd.Series(debounced, index=series.index)
+
+    # Apply debounced gear cleaning
+    df_rpm["gear_clean"] = debounce_gear(df_rpm["gear"], hold_threshold=5)
+    df_rpm["gear_clean"] = df_rpm["gear_clean"].clip(lower=1, upper=6)
 
 except Exception as e:
     print(f"Failed to load CSV: {e}")
     exit()
-
+    
 # Plot 1: Throttle and Brake Over Time
 # This plot uses the full dataset, since throttle/brake values don't require RPM filtering.
 
