@@ -59,7 +59,7 @@ except Exception as e:
     print(f"Failed to load or clean CSV: {e}")
     exit()
 
-# Real-Time Animated Lap Simulation Overlayed on Track Map
+# Animated lap simulation
 
 n_frames = len(df)
 x = df["world_position_X"]
@@ -68,11 +68,16 @@ y = df["world_position_Y"]
 fig, ax = plt.subplots(figsize=(8, 8))
 ax.plot(x, y, color="purple", alpha=0.3)
 dot, = ax.plot([], [], 'ro', markersize=10)
-ax.set_xlabel("World X Position")
-ax.set_ylabel("World Y Position")
-ax.set_title("MotoGP18 Lap Simulation (Real-Time)")
+ax.set_title("MotoGP18 Lap Simulation")
+
+fig.patch.set_facecolor('white')
+ax.set_facecolor('white')
+ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+for spine in ax.spines.values():
+    spine.set_visible(False)
+
 ax.axis("equal")
-ax.grid(True)
+ax.grid(False)
 
 # Telemetry overlay
 gear_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, fontsize=16, color='orange', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='orange'))
