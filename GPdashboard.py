@@ -79,6 +79,30 @@ for spine in ax.spines.values():
 ax.axis("equal")
 ax.grid(False)
 
+# throttle and brake bars
+throttle_ax = fig.add_axes([0.76, 0.55, 0.06, 0.35])  # [left, bottom, width, height]
+brake_ax = fig.add_axes([0.90, 0.55, 0.06, 0.35])
+
+# Throttle bar
+throttle_bar = throttle_ax.bar([0], [0], width=0.6, color='green')
+throttle_ax.set_ylim(0, 1)
+throttle_ax.set_xlim(-0.5, 0.5)
+throttle_ax.set_xticks([])
+throttle_ax.set_yticks([])
+throttle_ax.set_title("Throttle", fontsize=10)
+for spine in throttle_ax.spines.values():
+    spine.set_visible(False)
+
+# Brake bar
+brake_bar = brake_ax.bar([0], [0], width=0.6, color='red')
+brake_ax.set_ylim(0, 1)
+brake_ax.set_xlim(-0.5, 0.5)
+brake_ax.set_xticks([])
+brake_ax.set_yticks([])
+brake_ax.set_title("Brake", fontsize=10)
+for spine in brake_ax.spines.values():
+    spine.set_visible(False)
+
 # Telemetry overlay
 gear_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, fontsize=16, color='orange', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='orange'))
 rpm_text = ax.text(0.02, 0.90, '', transform=ax.transAxes, fontsize=14, color='blue', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='blue'))
@@ -96,7 +120,11 @@ def animate(i):
     rpm_text.set_text(f"RPM: {rpm}")
     throttle_text.set_text(f"Throttle: {throttle:.2f}")
     brake_text.set_text(f"Brake: {brake:.2f}")
-    return dot, gear_text, rpm_text, throttle_text, brake_text
+    
+    # Update bar heights
+    throttle_bar[0].set_height(throttle)
+    brake_bar[0].set_height(brake)
+    return dot, gear_text, rpm_text, throttle_text, brake_text, throttle_bar[0], brake_bar[0]
 
 # Use a fixed interval based on median dt (in ms)
 interval_ms = int(1000 * df['dt'].median())
@@ -107,5 +135,6 @@ ani = animation.FuncAnimation(
     blit=True, repeat=False
 )
 
-plt.tight_layout()
+# Remove tight_layout to avoid the warning with inset axes
+# plt.tight_layout()
 plt.show()
