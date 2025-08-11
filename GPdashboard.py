@@ -12,12 +12,41 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 
-# Configuration
+# --- config and constants ---
 DATA_DIR = 'data'
 FILENAME = "example_lap.csv"
 CSV_PATH = os.path.join(DATA_DIR, FILENAME)
 
-# Taking in data and cleaning
+# cleaning parameters
+INTERPOLATE_LIMIT = 10  # only takes small gaps
+JUMP_SIGMA = 5  # GPS jump cutoff = mean + JUMP_SIGMA * std
+GEAR_MIN, GEAR_MAX = 1, 6  # min and max gear values
+
+# timing
+DT_PER_TICK = 0.01  # as binIndex is 100Hz
+MIN_DT = 0.01  # avoid any freezes on 0
+MAX_DT = 0.2  # avoid spikes
+
+# overlay visuals
+TRACK_SIZE = (8, 8)  # size of the track
+
+THROTTLE_BAR_POSITION = [0.76, 0.55, 0.06, 0.35]  # [left, bottom, width, height]
+BRAKE_BAR_POSITION = [0.90, 0.55, 0.06, 0.35]  # [left, bottom, width, height]
+
+GEAR_POS = (0.02, 0.95)
+RPM_POS = (0.02, 0.90)
+THROTTLE_TXT_POS = (0.02, 0.85)
+BRAKE_TXT_POS = (0.02, 0.80)
+
+# colors
+DOT_COLOR = 'red'
+TRACK_COLOR = 'purple'
+THROTTLE_COLOR = 'green'
+BRAKE_COLOR = 'red'
+RPM_COLOR = 'blue'
+GEAR_COLOR = 'orange'
+
+# --- load and clean ---
 try:
     df = pd.read_csv(CSV_PATH, sep="\t")
     print(f"Loaded {len(df)} rows from '{FILENAME}'")
@@ -31,12 +60,12 @@ try:
     df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan)
 
     # Interpolating data to fill gaps and clean
-    df['throttle'] = df['throttle'].interpolate(limit=10, limit_direction='both')
-    df['brake_0'] = df['brake_0'].interpolate(limit=10, limit_direction='both')
-    df['rpm'] = df['rpm'].interpolate(limit=10, limit_direction='both')
-    df['gear'] = df['gear'].ffill().bfill().clip(lower=1, upper=6)
-    df['world_position_X'] = df['world_position_X'].interpolate(limit=10, limit_direction='both')
-    df['world_position_Y'] = df['world_position_Y'].interpolate(limit=10, limit_direction='both')
+    df['throttle'] = df['throttle'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+    df['brake_0'] = df['brake_0'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+    df['rpm'] = df['rpm'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+    df['gear'] = df['gear'].ffill().bfill().clip(lower=GEAR_MIN, upper=GEAR_MAX)
+    df['world_position_X'] = df['world_position_X'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+    df['world_position_Y'] = df['world_position_Y'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
 
     # Remove rows with any remaining NaNs
     df = df.dropna(subset=['world_position_X', 'world_position_Y', 'throttle', 'brake_0', 'rpm', 'gear'])
@@ -45,29 +74,28 @@ try:
     dx = df['world_position_X'].diff()
     dy = df['world_position_Y'].diff()
     distance = (dx**2 + dy**2)**0.5
-    jump_threshold = distance.mean() + 5 * distance.std()
-    df = df[distance.fillna(0) < jump_threshold]
-    df = df.reset_index(drop=True)
+    jump_threshold = distance.mean() + JUMP_SIGMA * distance.std()
+    df = df[distance.fillna(0) < jump_threshold].copy().reset_index(drop=True)
 
     # Calculate change in time using binIndex
-    df['dt'] = df['binIndex'].diff().fillna(0) * 0.01
+    df['dt'] = df['binIndex'].diff().fillna(0) * DT_PER_TICK
 
     # Cap the change in time to avoid strange animation spikes
-    df['dt'] = df['dt'].clip(lower=0.01, upper=0.2)
+    df['dt'] = df['dt'].clip(lower=MIN_DT, upper=MAX_DT)
 
 except Exception as e:
     print(f"Failed to load or clean CSV: {e}")
     exit()
 
-# Animated lap simulation
+# --- animation --- 
 
 n_frames = len(df)
 x = df["world_position_X"]
 y = df["world_position_Y"]
 
-fig, ax = plt.subplots(figsize=(8, 8))
-ax.plot(x, y, color="purple", alpha=0.3)
-dot, = ax.plot([], [], 'ro', markersize=10)
+fig, ax = plt.subplots(figsize=TRACK_SIZE)
+ax.plot(x, y, color=TRACK_COLOR, alpha=0.3)
+dot, = ax.plot([], [], 'o', color=DOT_COLOR, markersize=10)
 ax.set_title("MotoGP18 Lap Simulation")
 
 fig.patch.set_facecolor('white')
@@ -80,11 +108,11 @@ ax.axis("equal")
 ax.grid(False)
 
 # throttle and brake bars
-throttle_ax = fig.add_axes([0.76, 0.55, 0.06, 0.35])  # [left, bottom, width, height]
-brake_ax = fig.add_axes([0.90, 0.55, 0.06, 0.35])
+throttle_ax = fig.add_axes(THROTTLE_BAR_POSITION)
+brake_ax = fig.add_axes(BRAKE_BAR_POSITION)
 
 # Throttle bar
-throttle_bar = throttle_ax.bar([0], [0], width=0.6, color='green')
+throttle_bar = throttle_ax.bar([0], [0], width=0.6, color=THROTTLE_COLOR)
 throttle_ax.set_ylim(0, 1)
 throttle_ax.set_xlim(-0.5, 0.5)
 throttle_ax.set_xticks([])
@@ -94,7 +122,7 @@ for spine in throttle_ax.spines.values():
     spine.set_visible(False)
 
 # Brake bar
-brake_bar = brake_ax.bar([0], [0], width=0.6, color='red')
+brake_bar = brake_ax.bar([0], [0], width=0.6, color=BRAKE_COLOR)
 brake_ax.set_ylim(0, 1)
 brake_ax.set_xlim(-0.5, 0.5)
 brake_ax.set_xticks([])
@@ -104,10 +132,14 @@ for spine in brake_ax.spines.values():
     spine.set_visible(False)
 
 # Telemetry overlay
-gear_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, fontsize=16, color='orange', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='orange'))
-rpm_text = ax.text(0.02, 0.90, '', transform=ax.transAxes, fontsize=14, color='blue', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='blue'))
-throttle_text = ax.text(0.02, 0.85, '', transform=ax.transAxes, fontsize=14, color='green', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='green'))
-brake_text = ax.text(0.02, 0.80, '', transform=ax.transAxes, fontsize=14, color='red', ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor='red'))
+gear_text = ax.text(*GEAR_POS, '', transform=ax.transAxes, fontsize=16, color=GEAR_COLOR,
+                    ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=GEAR_COLOR))
+rpm_text = ax.text(*RPM_POS, '', transform=ax.transAxes, fontsize=14, color=RPM_COLOR,
+                   ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=RPM_COLOR))
+throttle_text = ax.text(*THROTTLE_TXT_POS, '', transform=ax.transAxes, fontsize=14, color=THROTTLE_COLOR,
+                        ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=THROTTLE_COLOR))
+brake_text = ax.text(*BRAKE_TXT_POS, '', transform=ax.transAxes, fontsize=14, color=BRAKE_COLOR,
+                     ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=BRAKE_COLOR))
 
 # Data animation
 def animate(i):
@@ -135,6 +167,4 @@ ani = animation.FuncAnimation(
     blit=True, repeat=False
 )
 
-# Remove tight_layout to avoid the warning with inset axes
-# plt.tight_layout()
 plt.show()
