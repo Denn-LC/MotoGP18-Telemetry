@@ -94,7 +94,7 @@ x = df["world_position_X"]
 y = df["world_position_Y"]
 
 fig, ax = plt.subplots(figsize=TRACK_SIZE)
-ax.plot(x, y, color=TRACK_COLOR, alpha=0.3)
+ax.plot(x, y, color=TRACK_COLOR)
 dot, = ax.plot([], [], 'o', color=DOT_COLOR, markersize=10)
 ax.set_title("MotoGP18 Lap Simulation")
 
@@ -133,13 +133,13 @@ for spine in brake_ax.spines.values():
 
 # Telemetry overlay
 gear_text = ax.text(*GEAR_POS, '', transform=ax.transAxes, fontsize=16, color=GEAR_COLOR,
-                    ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=GEAR_COLOR))
+                    ha='left', va='top', bbox=dict(facecolor='white', edgecolor=GEAR_COLOR))
 rpm_text = ax.text(*RPM_POS, '', transform=ax.transAxes, fontsize=14, color=RPM_COLOR,
-                   ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=RPM_COLOR))
+                   ha='left', va='top', bbox=dict(facecolor='white', edgecolor=RPM_COLOR))
 throttle_text = ax.text(*THROTTLE_TXT_POS, '', transform=ax.transAxes, fontsize=14, color=THROTTLE_COLOR,
-                        ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=THROTTLE_COLOR))
+                        ha='left', va='top', bbox=dict(facecolor='white', edgecolor=THROTTLE_COLOR))
 brake_text = ax.text(*BRAKE_TXT_POS, '', transform=ax.transAxes, fontsize=14, color=BRAKE_COLOR,
-                     ha='left', va='top', bbox=dict(facecolor='white', alpha=0.7, edgecolor=BRAKE_COLOR))
+                     ha='left', va='top', bbox=dict(facecolor='white', edgecolor=BRAKE_COLOR))
 
 # Data animation
 def animate(i):
