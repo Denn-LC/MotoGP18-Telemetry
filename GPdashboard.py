@@ -39,7 +39,8 @@ BRAKE_TXT_POS = (0.02, 0.80)
 
 # colors
 DOT_COLOR = 'red'
-TRACK_COLOR = 'purple'
+TRACK_COLOR = 'black'
+TRAIL_COLOR = '#8000FF'  # bright violet
 THROTTLE_COLOR = 'green'
 BRAKE_COLOR = 'red'
 RPM_COLOR = 'blue'
@@ -97,14 +98,13 @@ try:
     df.reset_index(drop=True, inplace=True)
 
     # Calculate change in time using binIndex
-    binIndex_diff = df['binIndex'].diff()
-    df['dt'] = binIndex_diff.fillna(0)
+    bin_index_diff = df['binIndex'].diff()
+    df['dt'] = bin_index_diff.fillna(0)
     df['dt'] = df['dt'] * DT_PER_TICK
 
     # Cap the change in time to avoid strange animation spikes
     dt = df['dt']
-    dt = dt.clip(lower=MIN_DT, upper=MAX_DT)
-    df['dt'] = dt
+    df['dt'] = df['dt'].clip(lower=MIN_DT, upper=MAX_DT)
 
 
 except Exception as e:
@@ -119,6 +119,12 @@ y = df["world_position_Y"]
 
 fig, ax = plt.subplots(figsize=TRACK_SIZE)
 ax.plot(x, y, color=TRACK_COLOR)
+
+# trail
+trail_len = 40
+trail, = ax.plot([], [], linewidth=2.5, color=TRAIL_COLOR)
+
+# marker for the current position
 dot, = ax.plot([], [], 'o', color=DOT_COLOR, markersize=10)
 ax.set_title("MotoGP18 Lap Simulation")
 
@@ -202,20 +208,28 @@ brake_text = ax.text(
 
 # Data animation
 def animate(i):
+
+    i0 = max(0, i - trail_len)
+    trail.set_data(x.iloc[i0:i+1], y.iloc[i0:i+1])
     dot.set_data([x.iloc[i]], [y.iloc[i]])
+
     gear = int(df['gear'].iloc[i])
     rpm = int(df['rpm'].iloc[i])
     throttle = df['throttle'].iloc[i]
     brake = df['brake_0'].iloc[i]
+
     gear_text.set_text(f"Gear: {gear}")
     rpm_text.set_text(f"RPM: {rpm}")
     throttle_text.set_text(f"Throttle: {throttle:.2f}")
     brake_text.set_text(f"Brake: {brake:.2f}")
+
+    throttle_bar[0].set_height(throttle)
+    brake_bar[0].set_height(brake)
     
     # Update bar heights
     throttle_bar[0].set_height(throttle)
     brake_bar[0].set_height(brake)
-    return dot, gear_text, rpm_text, throttle_text, brake_text, throttle_bar[0], brake_bar[0]
+    return dot, trail, gear_text, rpm_text, throttle_text, brake_text, throttle_bar[0], brake_bar[0]
 
 # Use a fixed interval based on median dt (in ms)
 interval_ms = int(1000 * df['dt'].median())
