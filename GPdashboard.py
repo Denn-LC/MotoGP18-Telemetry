@@ -52,8 +52,8 @@ try:
     print(f"Loaded {len(df)} rows from '{FILENAME}'")
 
     # Clean up invalid placeholders, e.g -1.0 for throttle/brake, -1 for gear
-    df['throttle'] = df['throttle'].replace(-1.0, np.nan).clip(upper=1)
-    df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).clip(upper=1)
+    df['throttle'] = df['throttle'].replace(-1.0, np.nan).clip(lower=0, upper=1)
+    df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).clip(lower=0, upper=1)
     df['rpm'] = df['rpm'].replace(-1.0, np.nan)
     df['gear'] = df['gear'].replace(-1, np.nan)
     df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan)
