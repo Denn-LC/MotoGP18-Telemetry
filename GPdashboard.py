@@ -51,6 +51,11 @@ try:
     df = pd.read_csv(CSV_PATH, sep="\t")
     print(f"Loaded {len(df)} rows from '{FILENAME}'")
 
+    # Drop any laps when lap is 0
+    if 'lapIndex' in df.columns:
+        race_rows = df['lapIndex'] > 0
+        df = df[race_rows].reset_index(drop=True)
+
     # Throttle in [0, 1]
     df['throttle'] = df['throttle'].replace(-1.0, np.nan)
     df['throttle'] = df['throttle'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
@@ -226,9 +231,6 @@ def animate(i):
     throttle_bar[0].set_height(throttle)
     brake_bar[0].set_height(brake)
     
-    # Update bar heights
-    throttle_bar[0].set_height(throttle)
-    brake_bar[0].set_height(brake)
     return dot, trail, gear_text, rpm_text, throttle_text, brake_text, throttle_bar[0], brake_bar[0]
 
 # Use a fixed interval based on median dt (in ms)
