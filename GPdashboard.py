@@ -51,14 +51,6 @@ try:
     df = pd.read_csv(CSV_PATH, sep="\t")
     print(f"Loaded {len(df)} rows from '{FILENAME}'")
 
-    # Clean up invalid placeholders, e.g -1.0 for throttle/brake, -1 for gear
-    df['throttle'] = df['throttle'].replace(-1.0, np.nan).clip(lower=0, upper=1)
-    df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).clip(lower=0, upper=1)
-    df['rpm'] = df['rpm'].replace(-1.0, np.nan)
-    df['gear'] = df['gear'].replace(-1, np.nan)
-    df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan)
-    df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan)
-
     # Interpolating data to fill gaps and clean
     df['throttle'] = df['throttle'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
     df['brake_0'] = df['brake_0'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
@@ -66,6 +58,14 @@ try:
     df['gear'] = df['gear'].ffill().bfill().clip(lower=GEAR_MIN, upper=GEAR_MAX)
     df['world_position_X'] = df['world_position_X'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
     df['world_position_Y'] = df['world_position_Y'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+
+    # Clean up invalid placeholders, e.g -1.0 for throttle/brake, -1 for gear
+    df['throttle'] = df['throttle'].replace(-1.0, np.nan).clip(lower=0, upper=1)
+    df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).clip(lower=0, upper=1)
+    df['rpm'] = df['rpm'].replace(-1.0, np.nan)
+    df['gear'] = df['gear'].replace(-1, np.nan)
+    df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan)
+    df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan)
 
     # Remove rows with any remaining NaNs
     df = df.dropna(subset=['world_position_X', 'world_position_Y', 'throttle', 'brake_0', 'rpm', 'gear'])
