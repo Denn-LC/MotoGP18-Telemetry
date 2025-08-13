@@ -20,7 +20,6 @@ CSV_PATH = os.path.join(DATA_DIR, FILENAME)
 # cleaning parameters
 INTERPOLATE_LIMIT = 10  # only takes small gaps
 JUMP_SIGMA = 5  # GPS jump cutoff = mean + JUMP_SIGMA * std
-GEAR_MIN, GEAR_MAX = 1, 6  # min and max gear values
 
 # timing
 DT_PER_TICK = 0.01  # as binIndex is 100Hz
@@ -51,37 +50,62 @@ try:
     df = pd.read_csv(CSV_PATH, sep="\t")
     print(f"Loaded {len(df)} rows from '{FILENAME}'")
 
-    # Interpolating data to fill gaps and clean
+    # Throttle in [0, 1]
+    df['throttle'] = df['throttle'].replace(-1.0, np.nan)
     df['throttle'] = df['throttle'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+    df['throttle'] = df['throttle'].clip(lower=0, upper=1)
+
+    # Brake in [0, 1]
+    df['brake_0'] = df['brake_0'].replace(-1.0, np.nan)
     df['brake_0'] = df['brake_0'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+    df['brake_0'] = df['brake_0'].clip(lower=0, upper=1)
+
+    # RPM cleaning
+    df['rpm'] = df['rpm'].replace(-1.0, np.nan)
     df['rpm'] = df['rpm'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
-    df['gear'] = df['gear'].ffill().bfill().clip(lower=GEAR_MIN, upper=GEAR_MAX)
+    df['rpm'] = df['rpm'].clip(lower=0)
+
+    # Gear in [1, 6]
+    df['gear'] = df['gear'].replace(-1, np.nan)
+    df['gear'] = df['gear'].ffill().bfill()
+    df['gear'] = df['gear'].round().clip(lower=1, upper=6)
+    df['gear'] = df['gear'].astype(int)
+
+    # Positions
+    df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan)
     df['world_position_X'] = df['world_position_X'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
+
+    df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan)
     df['world_position_Y'] = df['world_position_Y'].interpolate(limit=INTERPOLATE_LIMIT, limit_direction='both')
 
-    # Clean up invalid placeholders, e.g -1.0 for throttle/brake, -1 for gear
-    df['throttle'] = df['throttle'].replace(-1.0, np.nan).clip(lower=0, upper=1)
-    df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).clip(lower=0, upper=1)
-    df['rpm'] = df['rpm'].replace(-1.0, np.nan)
-    df['gear'] = df['gear'].replace(-1, np.nan)
-    df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan)
-    df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan)
-
-    # Remove rows with any remaining NaNs
-    df = df.dropna(subset=['world_position_X', 'world_position_Y', 'throttle', 'brake_0', 'rpm', 'gear'])
+    # Drop any rows still containing NaNs in required fields
+    df = df.dropna(subset=[
+        'world_position_X', 'world_position_Y',
+        'throttle', 'brake_0', 'rpm', 'gear'
+    ]).reset_index(drop=True)
 
     # removing jumps in GPS data for smoothness
     dx = df['world_position_X'].diff()
     dy = df['world_position_Y'].diff()
     distance = (dx**2 + dy**2)**0.5
+
     jump_threshold = distance.mean() + JUMP_SIGMA * distance.std()
-    df = df[distance.fillna(0) < jump_threshold].copy().reset_index(drop=True)
+    distance_no_nans = distance.fillna(0)
+    valid_rows = distance_no_nans < jump_threshold
+
+    df = df[valid_rows].copy()
+    df.reset_index(drop=True, inplace=True)
 
     # Calculate change in time using binIndex
-    df['dt'] = df['binIndex'].diff().fillna(0) * DT_PER_TICK
+    binIndex_diff = df['binIndex'].diff()
+    df['dt'] = binIndex_diff.fillna(0)
+    df['dt'] = df['dt'] * DT_PER_TICK
 
     # Cap the change in time to avoid strange animation spikes
-    df['dt'] = df['dt'].clip(lower=MIN_DT, upper=MAX_DT)
+    dt = df['dt']
+    dt = dt.clip(lower=MIN_DT, upper=MAX_DT)
+    df['dt'] = dt
+
 
 except Exception as e:
     print(f"Failed to load or clean CSV: {e}")
@@ -132,14 +156,49 @@ for spine in brake_ax.spines.values():
     spine.set_visible(False)
 
 # Telemetry overlay
-gear_text = ax.text(*GEAR_POS, '', transform=ax.transAxes, fontsize=16, color=GEAR_COLOR,
-                    ha='left', va='top', bbox=dict(facecolor='white', edgecolor=GEAR_COLOR))
-rpm_text = ax.text(*RPM_POS, '', transform=ax.transAxes, fontsize=14, color=RPM_COLOR,
-                   ha='left', va='top', bbox=dict(facecolor='white', edgecolor=RPM_COLOR))
-throttle_text = ax.text(*THROTTLE_TXT_POS, '', transform=ax.transAxes, fontsize=14, color=THROTTLE_COLOR,
-                        ha='left', va='top', bbox=dict(facecolor='white', edgecolor=THROTTLE_COLOR))
-brake_text = ax.text(*BRAKE_TXT_POS, '', transform=ax.transAxes, fontsize=14, color=BRAKE_COLOR,
-                     ha='left', va='top', bbox=dict(facecolor='white', edgecolor=BRAKE_COLOR))
+gear_text = ax.text(
+    *GEAR_POS,
+    '',
+    transform=ax.transAxes,
+    fontsize=16,
+    color=GEAR_COLOR,
+    ha='left',
+    va='top',
+    bbox=dict(facecolor='white', edgecolor=GEAR_COLOR)
+)
+
+rpm_text = ax.text(
+    *RPM_POS,
+    '',
+    transform=ax.transAxes,
+    fontsize=14,
+    color=RPM_COLOR,
+    ha='left',
+    va='top',
+    bbox=dict(facecolor='white', edgecolor=RPM_COLOR)
+)
+
+throttle_text = ax.text(
+    *THROTTLE_TXT_POS,
+    '',
+    transform=ax.transAxes,
+    fontsize=14,
+    color=THROTTLE_COLOR,
+    ha='left',
+    va='top',
+    bbox=dict(facecolor='white', edgecolor=THROTTLE_COLOR)
+)
+
+brake_text = ax.text(
+    *BRAKE_TXT_POS,
+    '',
+    transform=ax.transAxes,
+    fontsize=14,
+    color=BRAKE_COLOR,
+    ha='left',
+    va='top',
+    bbox=dict(facecolor='white', edgecolor=BRAKE_COLOR)
+)
 
 # Data animation
 def animate(i):
