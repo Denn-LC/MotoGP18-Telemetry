@@ -127,10 +127,10 @@ ax.plot(x, y, color=TRACK_COLOR)
 
 # trail
 trail_len = 40
-trail, = ax.plot([], [], linewidth=2.5, color=TRAIL_COLOR)
+trail, = ax.plot([], [], linewidth=2.5, color=TRAIL_COLOR, zorder = 1)
 
 # marker for the current position
-dot, = ax.plot([], [], 'o', color=DOT_COLOR, markersize=10)
+dot, = ax.plot([], [], 'o', color=DOT_COLOR, markersize=10, zorder = 2)
 ax.set_title("MotoGP18 Lap Simulation")
 
 fig.patch.set_facecolor('white')
