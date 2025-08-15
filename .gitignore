@@ -1,28 +1,56 @@
-# Python
+# ------------------------
+# Python cache and logs
+# ------------------------
 __pycache__/
 *.py[cod]
+*.log
 
-# Virtual env
+# ------------------------
+# Virtual environments
+# ------------------------
 .venv/
 venv/
 env/
 
-# IDE
+# ------------------------
+# IDE / editor settings
+# ------------------------
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 
-# Build
+# ------------------------
+# Build / packaging
+# ------------------------
 build/
 dist/
 *.egg-info/
 
-# Jupyter
+# ------------------------
+# Jupyter notebooks
+# ------------------------
 .ipynb_checkpoints/
 
-# OS
+# ------------------------
+# OS-specific files
+# ------------------------
 .DS_Store
 Thumbs.db
 
-# Data
-Data/*.csv
-!Data/example_lap.csv
+# ------------------------
+# Data files
+# ------------------------
+data/*.csv
+!data/example_lap.csv
+
+# ------------------------
+# Generated media
+# ------------------------
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.avi
+*.mov
