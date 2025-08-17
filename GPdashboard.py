@@ -38,6 +38,9 @@ GEAR_POS = (0.02, 0.95)
 RPM_POS = (0.02, 0.90)
 THROTTLE_TXT_POS = (0.02, 0.85)
 BRAKE_TXT_POS = (0.02, 0.80)
+SPEED_TXT_POS = (0.02, 0.75)
+LAP_TXT_POS   = (0.02, 0.70)
+
 
 # colors
 DOT_COLOR = 'red'
@@ -106,11 +109,18 @@ try:
 
     # timing
     bin_index_diff = df['binIndex'].diff()
-    df['dt_raw'] = (bin_index_diff.fillna(1) * DT_PER_TICK).clip(lower=0) # raw dt
-    df['dt'] = df['dt_raw'].clip(lower=MIN_DT, upper=MAX_DT) # clipped dt
+    df['dt_raw'] = (bin_index_diff.fillna(1) * DT_PER_TICK).clip(lower = 0) # raw dt
+    df['dt'] = df['dt_raw'].clip(lower = MIN_DT, upper = MAX_DT) # clipped dt
     # lap time in seconds
     df['time_s'] = df['dt_raw'].cumsum()
     total_lap_time_s = float(df['time_s'].iloc[-1])
+
+    vx = df['velocity_X']
+    vy = df['velocity_Y']
+    vz = df['velocity_Z']
+    
+    df['speed_mps'] = np.sqrt(vx**2 + vy**2 + vz**2)
+    df['speed_kph'] = df['speed_mps'] * 3.6
 
     # Cap the change in time to avoid strange animation spikes
     dt = df['dt']
@@ -217,6 +227,20 @@ brake_text = ax.text(
     bbox = dict(facecolor = 'white', edgecolor = BRAKE_COLOR)
 )
 
+speed_text = ax.text(
+    *SPEED_TXT_POS, '',
+    transform = ax.transAxes, fontsize = 14, color = 'black',
+    ha = 'left', va = 'top',
+    bbox = dict(facecolor = 'white', edgecolor = 'black')
+)
+
+lap_text = ax.text(
+    *LAP_TXT_POS, '',
+    transform = ax.transAxes, fontsize = 14, color = 'black',
+    ha = 'left', va = 'top',
+    bbox = dict(facecolor = 'white', edgecolor = 'black')
+)
+
 # Data animation
 def animate(i):
     
@@ -251,18 +275,28 @@ def animate(i):
     rpm = int(df['rpm'].iloc[i])
     throttle = df['throttle'].iloc[i]
     brake = df['brake_0'].iloc[i]
+    speed_kph = df['speed_kph'].iloc[i]
+    t_s = df['time_s'].iloc[i]
+
+    # format mm:ss.sss
+    mins = int(t_s // 60)
+    secs = t_s - 60 * mins
+    lap_time_str = f"{mins:d}:{secs:06.3f}"
+
 
     gear_text.set_text(f"Gear: {gear}")
     rpm_text.set_text(f"RPM: {rpm}")
     throttle_text.set_text(f"Throttle: {throttle:.2f}")
     brake_text.set_text(f"Brake: {brake:.2f}")
+    speed_text.set_text(f"Speed: {speed_kph:6.1f} km/h")
+    lap_text.set_text(f"Lap time: {lap_time_str}")
 
     throttle_bar[0].set_height(throttle)
     brake_bar[0].set_height(brake)
     
-    return dot, lc, gear_text, rpm_text, throttle_text, brake_text, throttle_bar[0], brake_bar[0]
+    return dot, lc, gear_text, rpm_text, throttle_text, brake_text, throttle_bar[0], brake_bar[0], speed_text, lap_text
 
-# Use a fixed interval based on median dt (in ms)
+# Use a fixed interval based on median dt
 interval_ms = int(1000 * df['dt'].median())
 
 ani = animation.FuncAnimation(
