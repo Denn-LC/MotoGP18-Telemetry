@@ -104,10 +104,13 @@ try:
     df = df[valid_rows].copy()
     df.reset_index(drop = True, inplace = True)
 
-    # Calculate change in time using binIndex
+    # timing
     bin_index_diff = df['binIndex'].diff()
-    df['dt'] = bin_index_diff.fillna(0)
-    df['dt'] = df['dt'] * DT_PER_TICK
+    df['dt_raw'] = (bin_index_diff.fillna(1) * DT_PER_TICK).clip(lower=0) # raw dt
+    df['dt'] = df['dt_raw'].clip(lower=MIN_DT, upper=MAX_DT) # clipped dt
+    # lap time in seconds
+    df['time_s'] = df['dt_raw'].cumsum()
+    total_lap_time_s = float(df['time_s'].iloc[-1])
 
     # Cap the change in time to avoid strange animation spikes
     dt = df['dt']
