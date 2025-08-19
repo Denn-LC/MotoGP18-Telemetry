@@ -16,7 +16,7 @@ from matplotlib.collections import LineCollection
 
 # --- config and constants ---
 DATA_DIR = 'data'
-FILENAME = "example_lap.csv"
+FILENAME = "new_example.csv"
 CSV_PATH = os.path.join(DATA_DIR, FILENAME)
 
 # cleaning parameters
@@ -35,11 +35,11 @@ THROTTLE_BAR_POSITION = [0.76, 0.55, 0.06, 0.35]  # [left, bottom, width, height
 BRAKE_BAR_POSITION = [0.90, 0.55, 0.06, 0.35]  # [left, bottom, width, height]
 
 GEAR_POS = (0.02, 0.95)
-RPM_POS = (0.02, 0.90)
-THROTTLE_TXT_POS = (0.02, 0.85)
-BRAKE_TXT_POS = (0.02, 0.80)
-SPEED_TXT_POS = (0.02, 0.75)
-LAP_TXT_POS   = (0.02, 0.70)
+RPM_POS = (0.02, 0.89)
+THROTTLE_TXT_POS = (0.02, 0.83)
+BRAKE_TXT_POS = (0.02, 0.77)
+SPEED_TXT_POS = (0.02, 0.71)
+LAP_TXT_POS   = (0.02, 0.65)
 
 
 # colors
