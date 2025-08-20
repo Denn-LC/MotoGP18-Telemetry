@@ -21,7 +21,7 @@ To run the dashboard locally:
 
 1. Clone this repo:
 ```bash
-git clone https://github.com/[yourusername]/motogp18-telemetry.git
+git clone https://github.com/Denn-LC/motogp18-telemetry.git
 cd motogp18-telemetry
 ```
 2. Install dependencies:
