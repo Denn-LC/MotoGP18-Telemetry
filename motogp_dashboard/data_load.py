@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-
 from motogp_dashboard import config
 
 def load_data():
@@ -72,5 +71,3 @@ def load_data():
     except Exception as e:
         print(f"Failed to load or clean CSV: {e}")
         return None
-if __name__ == "__main__":
-    main()

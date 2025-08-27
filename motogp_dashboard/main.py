@@ -17,9 +17,21 @@ def main():
     x = df['world_position_X']
     y = df['world_position_Y']
 
-    fig, ax, dot, lc = plot.init_plot(x, y)
-    trail_len = 60
+    if config.TRACK_UNDERLAY:
+        base_mask = (df['lapIndex'] == 1)
+        x_base = x[base_mask]
+        y_base = y[base_mask]
+        fig, ax, dot, lc = plot.init_plot(x_base, y_base)
 
+    # style the underlay line only
+        for ln in list(ax.lines):
+            if ln is not dot:
+                ln.set_linewidth(config.TRACK_LINEWIDTH)
+                ln.set_color(config.TRACK_COLOR)
+                ln.set_alpha(config.TRACK_ALPHA)
+    else:
+        fig, ax, dot, lc = plot.init_plot(x, y)
+        
     # overlays (same as original script)
     throttle_ax = fig.add_axes(config.THROTTLE_BAR_POSITION)
     brake_ax = fig.add_axes(config.BRAKE_BAR_POSITION)
@@ -64,7 +76,7 @@ def main():
                        bbox = dict(facecolor = 'white', edgecolor = 'black'))
 
     def animate(i):
-        i0 = max(0, i - trail_len)
+        i0 = max(0, i - config.TRAIL_LEN)
         xs = x.iloc[i0:i+1].to_numpy()
         ys = y.iloc[i0:i+1].to_numpy()
 

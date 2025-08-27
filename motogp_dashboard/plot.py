@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
+
 from motogp_dashboard import config
 
 def init_plot(x, y):
