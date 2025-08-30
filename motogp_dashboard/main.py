@@ -28,15 +28,35 @@ def main():
 
     # Smoothening
 
+    def smooth_and_limit(series, dt, alpha, rate_up, rate_down):
+    # EMA
+        ema = series.ewm(alpha = alpha, adjust = False).mean().clip(0, 1)
+    # Slew
+        sig = ema.to_numpy()
+        dtv = dt.to_numpy()
+
+        out = np.empty_like(sig, dtype = float)
+        out[0] = float(sig[0])
+        for i in range(1, len(sig)):
+            max_up   = rate_up   * float(dtv[i])
+            max_down = rate_down * float(dtv[i])
+            delta = sig[i] - out[i - 1]
+            if delta > 0:
+                delta = min(delta, max_up)
+            else:
+                delta = max(delta, -max_down)
+            out[i] = out[i - 1] + delta
+        return np.clip(out, 0.0, 1.0)
+
     # --- Throttle ---
-    throttle_ema = df['throttle'].ewm(alpha = config.SMOOTHING_ALPHA, adjust = False)
-    throttle_mean = throttle_ema.mean()
-    df['throttle_s'] = throttle_mean.clip(0, 1)
+    df['throttle_smooth'] = smooth_and_limit(df['throttle'], df['dt'],
+                                            alpha = config.SMOOTHING_ALPHA,
+                                            rate_up = config.THR_RATE_UP, rate_down = config.THR_RATE_DOWN ) 
 
     # --- Brake ---
-    brake_ema = df['brake_0'].ewm(alpha = config.SMOOTHING_ALPHA, adjust = False)
-    brake_mean = brake_ema.mean()
-    df['brake_s'] = brake_mean.clip(0, 1)
+    df['brake_smooth'] = smooth_and_limit(df['brake_0'], df['dt'],
+                                         alpha = config.SMOOTHING_ALPHA,
+                                         rate_up = config.BRK_RATE_UP, rate_down = config.BRK_RATE_DOWN )
 
     # Figure
     use_underlay = getattr(config, "TRACK_UNDERLAY", False) 
@@ -134,9 +154,9 @@ def main():
         # Telemetry text + bars
         gear = int(df['gear'].iloc[i])
         rpm = int(df['rpm'].iloc[i])
-        throttle = float(df['throttle_s'].iloc[i])
-        brake = float(df['brake_s'].iloc[i])
-        speed_kph = float(df['speed_kph'].iloc[i])
+        throttle = float(df['throttle_smooth'].iloc[i])
+        brake = float(df['brake_smooth'].iloc[i])
+        speed_kph = int(df['speed_kph'].iloc[i])
 
         # lap counter
         current_lap = int(df['lapIndex'].iloc[i])
@@ -149,7 +169,7 @@ def main():
         rpm_text.set_text(f"RPM: {rpm}")
         throttle_text.set_text(f"Throttle: {throttle:.2f}")
         brake_text.set_text(f"Brake: {brake:.2f}")
-        speed_text.set_text(f"Speed: {speed_kph:6.1f} km/h")
+        speed_text.set_text(f"Speed: {speed_kph} km/h")
 
         throttle_bar[0].set_height(throttle)
         brake_bar[0].set_height(brake)

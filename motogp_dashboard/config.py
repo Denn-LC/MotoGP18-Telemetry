@@ -14,6 +14,11 @@ INTERPOLATE_LIMIT = 10     # only fill small gaps
 JUMP_SIGMA        = 5      # GPS jump cutoff = mean + JUMP_SIGMA * std
 SMOOTHING_ALPHA   = 0.25   # 0 < alpha <= 1, higher = less smoothing
 
+THR_RATE_UP   = 3.0   # throttle can rise fast
+THR_RATE_DOWN = 5.0   # can close even faster
+BRK_RATE_UP   = 8.0   # brake can bite quickly
+BRK_RATE_DOWN = 6.0   # and release fast(ish)
+
 # ----------------------------
 # Timing
 # ----------------------------
