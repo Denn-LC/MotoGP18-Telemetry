@@ -26,6 +26,18 @@ def main():
     else:
         df['lap_time_s'] = df['time_s']  # fallback if lapIndex missing
 
+    # Smoothening
+
+    # --- Throttle ---
+    throttle_ema = df['throttle'].ewm(alpha = config.SMOOTHING_ALPHA, adjust = False)
+    throttle_mean = throttle_ema.mean()
+    df['throttle_s'] = throttle_mean.clip(0, 1)
+
+    # --- Brake ---
+    brake_ema = df['brake_0'].ewm(alpha = config.SMOOTHING_ALPHA, adjust = False)
+    brake_mean = brake_ema.mean()
+    df['brake_s'] = brake_mean.clip(0, 1)
+
     # Figure
     use_underlay = getattr(config, "TRACK_UNDERLAY", False) 
 
@@ -122,8 +134,8 @@ def main():
         # Telemetry text + bars
         gear = int(df['gear'].iloc[i])
         rpm = int(df['rpm'].iloc[i])
-        throttle = float(df['throttle'].iloc[i])
-        brake = float(df['brake_0'].iloc[i])
+        throttle = float(df['throttle_s'].iloc[i])
+        brake = float(df['brake_s'].iloc[i])
         speed_kph = float(df['speed_kph'].iloc[i])
 
         # lap counter

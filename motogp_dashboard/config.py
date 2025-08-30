@@ -12,6 +12,7 @@ CSV_PATH  = os.path.join(DATA_DIR, FILENAME)
 # ----------------------------
 INTERPOLATE_LIMIT = 10     # only fill small gaps
 JUMP_SIGMA        = 5      # GPS jump cutoff = mean + JUMP_SIGMA * std
+SMOOTHING_ALPHA   = 0.25   # 0 < alpha <= 1, higher = less smoothing
 
 # ----------------------------
 # Timing
