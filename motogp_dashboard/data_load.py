@@ -2,6 +2,15 @@ import pandas as pd
 import numpy as np
 from motogp_dashboard import config
 
+def add_lap_time(df):
+    if 'lapIndex' in df.columns:
+        df['lap_time_s'] = df['time_s'] - df.groupby('lapIndex')['time_s'].transform('min')
+    else:
+        df['lap_time_s'] = df['time_s']
+
+    return df
+
+
 def load_data():
     try:
         df = pd.read_csv(config.CSV_PATH, sep="\t")
