@@ -15,7 +15,7 @@ def run_animation(fig, animate, n_frames, df):
 def make_animate(df, x, y, dot, lc,
                  throttle_bar, brake_bar,
                  gear_text, rpm_text, throttle_text,
-                 brake_text, speed_text, lap_text):
+                 brake_text, speed_text, lap_text, lean_text):
 
     def animate(i):
         # Fade trail
@@ -48,6 +48,7 @@ def make_animate(df, x, y, dot, lc,
         throttle = float(df['throttle_smooth'].iloc[i])
         brake = float(df['brake_smooth'].iloc[i])
         speed_kph = int(df['speed_kph'].iloc[i])
+        lean_deg = int(df['lean_deg'].iloc[i])
 
         # lap counter
         current_lap = int(df['lapIndex'].iloc[i])
@@ -61,12 +62,13 @@ def make_animate(df, x, y, dot, lc,
         throttle_text.set_text(f"Throttle: {throttle:.2f}")
         brake_text.set_text(f"Brake: {brake:.2f}")
         speed_text.set_text(f"Speed: {speed_kph} km/h")
+        lean_text.set_text(f"Lean: {lean_deg}°")
 
         throttle_bar[0].set_height(throttle)
         brake_bar[0].set_height(brake)
 
         return (dot, lc, gear_text, rpm_text, throttle_text,
                 brake_text, throttle_bar[0], brake_bar[0],
-                speed_text, lap_text)
+                speed_text, lap_text, lean_text)
 
     return animate

@@ -50,6 +50,7 @@ THROTTLE_TXT_POS  = (0.02, 0.83)
 BRAKE_TXT_POS     = (0.02, 0.77)
 SPEED_TXT_POS     = (0.02, 0.71)
 LAP_TXT_POS       = (0.02, 0.65)
+LEAN_TXT_POS      = (0.02, 0.59)
 
 # ----------------------------
 # Animation

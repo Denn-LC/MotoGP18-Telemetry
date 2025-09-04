@@ -2,6 +2,57 @@ import pandas as pd
 import numpy as np
 from motogp_dashboard import config
 
+def add_lean_angle(df):
+
+    # Ensure float64 for numerical stability
+    x = df['world_position_X'].astype('float64').to_numpy()
+    y = df['world_position_Y'].astype('float64').to_numpy()
+
+    if 'time_s' in df.columns:
+        t = df['time_s'].astype('float64').to_numpy()
+    else:
+        dt = df['dt'].astype('float64').to_numpy()
+        if np.nanmedian(dt) > 0.5:
+            dt = dt / 1000.0
+        t = np.cumsum(np.nan_to_num(dt, nan = 0.0))
+
+    # Ensure strictly increasing time
+    dt_t = np.diff(t, prepend = t[0])
+    if np.any(dt_t <= 0):
+        eps = 1e-9
+        t = t + np.linspace(0.0, eps * (len(t) - 1), num = len(t))
+
+    # First and second derivatives
+    vx = np.gradient(x, t, edge_order = 1)
+    vy = np.gradient(y, t, edge_order = 1)
+    ax = np.gradient(vx, t, edge_order = 1)
+    ay = np.gradient(vy, t, edge_order = 1)
+
+    # Curvature and lean angle
+    v2 = vx * vx + vy * vy
+    speed = np.sqrt(np.maximum(v2, 0.0))
+
+    cross = vx * ay - vy * ax
+    denom = np.power(np.maximum(v2, 1e-12), 1.5)
+    with np.errstate(divide = 'ignore', invalid = 'ignore'):
+        kappa_signed = cross / denom
+
+    # Lean angle phi 
+    a_lat_signed = v2 * kappa_signed
+    g = 9.81
+    phi_rad = np.arctan2(a_lat_signed, g)
+    lean_deg = np.degrees(phi_rad)
+
+    # Zero lean at low speeds
+    near_zero = speed < 1.0  # m/s
+    lean_deg[near_zero] = 0.0
+
+    # Clean-up and physical clipping
+    lean_deg = np.nan_to_num(lean_deg, nan = 0.0, posinf = 0.0, neginf = 0.0)
+
+    df['lean_deg'] = lean_deg
+    return df
+
 def add_lap_time(df):
     if 'lapIndex' in df.columns:
         df['lap_time_s'] = df['time_s'] - df.groupby('lapIndex')['time_s'].transform('min')
@@ -74,6 +125,7 @@ def load_data():
         vz = df['velocity_Z']
         df['speed_mps'] = np.sqrt(vx**2 + vy**2 + vz**2)
         df['speed_kph'] = df['speed_mps'] * 3.6
+        df = add_lean_angle(df)
 
         return df
 

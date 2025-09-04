@@ -89,5 +89,9 @@ def hud(fig, ax):
                        fontsize = 14, color = 'black',
                        ha = 'left', va = 'top',
                        bbox = dict(facecolor = 'white', edgecolor = 'black'))
+    lean_text = ax.text(*config.LEAN_TXT_POS, '', transform = ax.transAxes,
+                    fontsize = 14, color = 'black',
+                    ha = 'left', va = 'top',
+                    bbox = dict(facecolor = 'white', edgecolor = 'black'))
 
-    return throttle_bar, brake_bar, gear_text, rpm_text, throttle_text, brake_text, speed_text, lap_text
+    return throttle_bar, brake_bar, gear_text, rpm_text, throttle_text, brake_text, speed_text, lap_text, lean_text

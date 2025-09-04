@@ -18,7 +18,6 @@ def main():
     # Shorthand series
     x = df['world_position_X']
     y = df['world_position_Y']
-    n_frames = len(df)
 
     df = data_load.add_lap_time(df)
 
@@ -38,16 +37,16 @@ def main():
 
     # HUD
     (throttle_bar, brake_bar, gear_text, rpm_text, throttle_text,
-    brake_text, speed_text, lap_text) = plot.hud(fig, ax)
+    brake_text, speed_text, lap_text, lean_text) = plot.hud(fig, ax)
 
     # Animation
     animate = animation.make_animate(
     df, x, y, dot, lc,
     throttle_bar, brake_bar,
     gear_text, rpm_text, throttle_text,
-    brake_text, speed_text, lap_text
+    brake_text, speed_text, lap_text, lean_text
 )
-
+    n_frames = len(df)
     ani = animation.run_animation(fig, animate, n_frames, df)
     plt.show()
 
