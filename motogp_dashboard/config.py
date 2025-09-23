@@ -19,6 +19,11 @@ THR_RATE_DOWN = 9.0   # can close even faster
 BRK_RATE_UP   = 7.0   # brake can bite quickly
 BRK_RATE_DOWN = 9.0   # and release fast(ish)
 
+MIN_SPEED_MS = 3.0    # min speed to compute lean angle
+MAX_DEG  = 70.0   # max lean angle to avoid spikes
+POS_SMOOTH_S = 0.12   # ~120 ms smoothing on x,y
+LEAN_SMOOTH_S = 0.25   # ~250 ms smoothing on final lean
+
 # ----------------------------
 # Timing
 # ----------------------------

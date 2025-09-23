@@ -3,54 +3,67 @@ import numpy as np
 from motogp_dashboard import config
 
 def add_lean_angle(df):
-
-    # Ensure float64 for numerical stability
+    # inputs
     x = df['world_position_X'].astype('float64').to_numpy()
     y = df['world_position_Y'].astype('float64').to_numpy()
+    t = df['time_s'].astype('float64').to_numpy()
 
-    if 'time_s' in df.columns:
-        t = df['time_s'].astype('float64').to_numpy()
-    else:
-        dt = df['dt'].astype('float64').to_numpy()
-        if np.nanmedian(dt) > 0.5:
-            dt = dt / 1000.0
-        t = np.cumsum(np.nan_to_num(dt, nan = 0.0))
+    # ensure strictly increasing time (prevents divide by zero warnings)
+    t = t + np.arange(len(t)) * 1e-9
 
-    # Ensure strictly increasing time
-    dt_t = np.diff(t, prepend = t[0])
-    if np.any(dt_t <= 0):
-        eps = 1e-9
-        t = t + np.linspace(0.0, eps * (len(t) - 1), num = len(t))
+    # median dt for converting seconds
+    dt = np.diff(t, prepend = t[0])
+    med = np.nanmedian(dt)
+    dt_med = float(med) if np.isfinite(med) and med > 0 else 1.0 / 60.0
 
-    # First and second derivatives
-    vx = np.gradient(x, t, edge_order = 1)
-    vy = np.gradient(y, t, edge_order = 1)
-    ax = np.gradient(vx, t, edge_order = 1)
-    ay = np.gradient(vy, t, edge_order = 1)
+    # zero-phase smoothing on positions
+    w_pos = int(round(config.POS_SMOOTH_S / dt_med))
+    if w_pos < 5:
+        w_pos = 5
+    if w_pos % 2 == 0:
+        w_pos += 1
 
-    # Curvature and lean angle
-    v2 = vx * vx + vy * vy
-    speed = np.sqrt(np.maximum(v2, 0.0))
+    xs = pd.Series(x).rolling(window = w_pos, center = True, min_periods = 1).median() \
+                     .rolling(window = w_pos, center = True, min_periods = 1).mean().to_numpy()
+    ys = pd.Series(y).rolling(window = w_pos, center = True, min_periods = 1).median() \
+                     .rolling(window = w_pos, center = True, min_periods = 1).mean().to_numpy()
 
-    cross = vx * ay - vy * ax
-    denom = np.power(np.maximum(v2, 1e-12), 1.5)
-    with np.errstate(divide = 'ignore', invalid = 'ignore'):
-        kappa_signed = cross / denom
+    # derivatives vs time
+    dx  = np.gradient(xs, t, edge_order = 2)
+    dy  = np.gradient(ys, t, edge_order = 2)
+    ddx = np.gradient(dx,  t, edge_order = 2)
+    ddy = np.gradient(dy,  t, edge_order = 2)
 
-    # Lean angle phi 
-    a_lat_signed = v2 * kappa_signed
-    g = 9.81
-    phi_rad = np.arctan2(a_lat_signed, g)
+    # geometric curvature
+    v2_xy = dx * dx + dy * dy
+    denom = np.power(np.maximum(v2_xy, 1e-12), 1.5)
+    kappa = (dx * ddy - dy * ddx) / denom
+    kappa = np.nan_to_num(kappa, nan = 0.0, posinf = 0.0, neginf = 0.0)
+
+    # speed from telemetry
+    speed = df['speed_mps'].astype('float64').to_numpy()
+
+    # lean angle
+    a_lat   = (speed ** 2) * kappa
+    phi_rad = np.arctan2(a_lat, 9.81)
     lean_deg = np.degrees(phi_rad)
 
-    # Zero lean at low speeds
-    near_zero = speed < 1.0  # m/s
-    lean_deg[near_zero] = 0.0
-
-    # Clean-up and physical clipping
+    # stability + clipping
+    lean_deg[speed < float(config.MIN_SPEED_MS)] = 0.0
+    lean_deg = np.clip(lean_deg, -float(config.MAX_DEG), float(config.MAX_DEG))
     lean_deg = np.nan_to_num(lean_deg, nan = 0.0, posinf = 0.0, neginf = 0.0)
 
-    df['lean_deg'] = lean_deg
+    # final smoothing on lean
+    w_lean = int(round(config.LEAN_SMOOTH_S / dt_med))
+    if w_lean < 7:
+        w_lean = 7
+    if w_lean % 2 == 0:
+        w_lean += 1
+
+    lean_deg = pd.Series(lean_deg).rolling(window = 5, center = True, min_periods = 1).median() \
+                                 .rolling(window = w_lean, center = True, min_periods = 1).mean().to_numpy()
+
+    df['lean_deg'] = np.abs(lean_deg)
     return df
 
 def add_lap_time(df):
