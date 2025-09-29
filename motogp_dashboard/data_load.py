@@ -3,67 +3,61 @@ import numpy as np
 from motogp_dashboard import config
 
 def add_lean_angle(df):
-    # inputs
+    """
+    Compute signed lean angle from path curvature and speed.
+    Positive = right, Negative = left. Absolute also provided for legacy uses.
+    """
     x = df['world_position_X'].astype('float64').to_numpy()
     y = df['world_position_Y'].astype('float64').to_numpy()
     t = df['time_s'].astype('float64').to_numpy()
 
-    # ensure strictly increasing time (prevents divide by zero warnings)
+    # strictly increasing time to avoid divide-by-zero gradients
     t = t + np.arange(len(t)) * 1e-9
 
-    # median dt for converting seconds
     dt = np.diff(t, prepend = t[0])
     med = np.nanmedian(dt)
     dt_med = float(med) if np.isfinite(med) and med > 0 else 1.0 / 60.0
 
     # zero-phase smoothing on positions
     w_pos = int(round(config.POS_SMOOTH_S / dt_med))
-    if w_pos < 5:
-        w_pos = 5
-    if w_pos % 2 == 0:
-        w_pos += 1
+    if w_pos < 5: w_pos = 5
+    if w_pos % 2 == 0: w_pos += 1
 
     xs = pd.Series(x).rolling(window = w_pos, center = True, min_periods = 1).median() \
                      .rolling(window = w_pos, center = True, min_periods = 1).mean().to_numpy()
     ys = pd.Series(y).rolling(window = w_pos, center = True, min_periods = 1).median() \
                      .rolling(window = w_pos, center = True, min_periods = 1).mean().to_numpy()
 
-    # derivatives vs time
     dx  = np.gradient(xs, t, edge_order = 2)
     dy  = np.gradient(ys, t, edge_order = 2)
     ddx = np.gradient(dx,  t, edge_order = 2)
     ddy = np.gradient(dy,  t, edge_order = 2)
 
-    # geometric curvature
-    v2_xy = dx * dx + dy * dy
-    denom = np.power(np.maximum(v2_xy, 1e-12), 1.5)
+    v2   = dx * dx + dy * dy
+    denom = np.power(np.maximum(v2, 1e-12), 1.5)
     kappa = (dx * ddy - dy * ddx) / denom
     kappa = np.nan_to_num(kappa, nan = 0.0, posinf = 0.0, neginf = 0.0)
 
-    # speed from telemetry
     speed = df['speed_mps'].astype('float64').to_numpy()
 
-    # lean angle
-    a_lat   = (speed ** 2) * kappa
-    phi_rad = np.arctan2(a_lat, 9.81)
-    lean_deg = np.degrees(phi_rad)
+    a_lat     = (speed ** 2) * kappa
+    phi_rad   = np.arctan2(a_lat, 9.81)
+    lean_deg  = np.degrees(phi_rad)
 
-    # stability + clipping
     lean_deg[speed < float(config.MIN_SPEED_MS)] = 0.0
     lean_deg = np.clip(lean_deg, -float(config.MAX_DEG), float(config.MAX_DEG))
     lean_deg = np.nan_to_num(lean_deg, nan = 0.0, posinf = 0.0, neginf = 0.0)
 
-    # final smoothing on lean
+    # final smoothing
     w_lean = int(round(config.LEAN_SMOOTH_S / dt_med))
-    if w_lean < 7:
-        w_lean = 7
-    if w_lean % 2 == 0:
-        w_lean += 1
+    if w_lean < 7: w_lean = 7
+    if w_lean % 2 == 0: w_lean += 1
 
     lean_deg = pd.Series(lean_deg).rolling(window = 5, center = True, min_periods = 1).median() \
                                  .rolling(window = w_lean, center = True, min_periods = 1).mean().to_numpy()
 
-    df['lean_deg'] = np.abs(lean_deg)
+    df['lean_deg_signed'] = lean_deg
+    df['lean_deg']        = np.abs(lean_deg)
     return df
 
 def add_lap_time(df):
@@ -71,74 +65,48 @@ def add_lap_time(df):
         df['lap_time_s'] = df['time_s'] - df.groupby('lapIndex')['time_s'].transform('min')
     else:
         df['lap_time_s'] = df['time_s']
-
     return df
-
 
 def load_data():
     try:
-        df = pd.read_csv(config.CSV_PATH, sep="\t")
+        df = pd.read_csv(config.CSV_PATH, sep = "\t")
         print(f"Loaded {len(df)} rows from '{config.FILENAME}'")
 
-        # Drop any laps when lap is 0
         if 'lapIndex' in df.columns:
-            race_rows = df['lapIndex'] > 0
-            df = df[race_rows].reset_index(drop = True)
+            df = df[df['lapIndex'] > 0].reset_index(drop = True)
 
-        # Throttle
-        df['throttle'] = df['throttle'].replace(-1.0, np.nan)
-        df['throttle'] = df['throttle'].interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
-        df['throttle'] = df['throttle'].clip(lower = 0, upper = 1)
+        # Inputs
+        df['throttle'] = df['throttle'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
+        df['brake_0']  = df['brake_0'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
+        df['rpm']      = df['rpm'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(lower = 0)
 
-        # Brake
-        df['brake_0'] = df['brake_0'].replace(-1.0, np.nan)
-        df['brake_0'] = df['brake_0'].interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
-        df['brake_0'] = df['brake_0'].clip(lower = 0, upper = 1)
+        df['gear'] = df['gear'].replace(-1, np.nan).ffill().bfill().round().clip(1, 6).astype(int)
 
-        # RPM
-        df['rpm'] = df['rpm'].replace(-1.0, np.nan)
-        df['rpm'] = df['rpm'].interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
-        df['rpm'] = df['rpm'].clip(lower = 0)
+        df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
+        df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
 
-        # Gear
-        df['gear'] = df['gear'].replace(-1, np.nan)
-        df['gear'] = df['gear'].ffill().bfill()
-        df['gear'] = df['gear'].round().clip(lower = 1, upper = 6)
-        df['gear'] = df['gear'].astype(int)
-
-        # Positions
-        df['world_position_X'] = df['world_position_X'].replace(-1.0, np.nan)
-        df['world_position_X'] = df['world_position_X'].interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
-        df['world_position_Y'] = df['world_position_Y'].replace(-1.0, np.nan)
-        df['world_position_Y'] = df['world_position_Y'].interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both')
-
-        # Drop rows with NaNs
-        df = df.dropna(subset = [
-            'world_position_X', 'world_position_Y',
-            'throttle', 'brake_0', 'rpm', 'gear'
-        ]).reset_index(drop = True)
+        df = df.dropna(subset = ['world_position_X', 'world_position_Y', 'throttle', 'brake_0', 'rpm', 'gear']).reset_index(drop = True)
 
         # Remove GPS jumps
         dx = df['world_position_X'].diff()
         dy = df['world_position_Y'].diff()
         distance = (dx**2 + dy**2) ** 0.5
         jump_threshold = distance.mean() + config.JUMP_SIGMA * distance.std()
-        valid_rows = distance.fillna(0) < jump_threshold
-        df = df[valid_rows].copy().reset_index(drop = True)
+        df = df[distance.fillna(0) < jump_threshold].reset_index(drop = True)
 
         # Timing
         bin_index_diff = df['binIndex'].diff()
         df['dt_raw'] = (bin_index_diff.fillna(1) * config.DT_PER_TICK).clip(lower = 0)
-        df['dt'] = df['dt_raw'].clip(lower = config.MIN_DT, upper = config.MAX_DT)
+        df['dt']     = df['dt_raw'].clip(lower = config.MIN_DT, upper = config.MAX_DT)
         df['time_s'] = df['dt_raw'].cumsum()
 
         # Speed
-        vx = df['velocity_X']
-        vy = df['velocity_Y']
-        vz = df['velocity_Z']
+        vx = df['velocity_X']; vy = df['velocity_Y']; vz = df['velocity_Z']
         df['speed_mps'] = np.sqrt(vx**2 + vy**2 + vz**2)
         df['speed_kph'] = df['speed_mps'] * 3.6
+
         df = add_lean_angle(df)
+        df = add_lap_time(df)
 
         return df
 
