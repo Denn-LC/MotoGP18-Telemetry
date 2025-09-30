@@ -15,9 +15,6 @@ def main():
     x = df['world_position_X']
     y = df['world_position_Y']
 
-    # Ensuring lap time is present
-    df = data_load.add_lap_time(df)
-
     # Smoothed break and throttle
     df['throttle_smooth'] = utils.smooth_and_limit(
         df['throttle'], df['dt'],

@@ -4,7 +4,7 @@ from matplotlib import patheffects as pe
 from matplotlib.font_manager import FontProperties
 from motogp_dashboard import config
 
-def _get_font_props(size):
+def get_font(size):
     # Accepts custom font, else uses default fallback
     if config.FONT_PATH and isinstance(config.FONT_PATH, str) and len(config.FONT_PATH.strip()) > 0:
         try:
@@ -14,7 +14,7 @@ def _get_font_props(size):
     return FontProperties(family = config.FONT_FALLBACK, size = size, weight = config.FONT_WEIGHT)
 
 def stroke_effect():
-    # Text stroke effect for better visibility
+    # Text stroke effect so it reads better
     rgba_black = (0.0, 0.0, 0.0, float(config.STROKE_ALPHA))
     return [pe.withStroke(linewidth = float(config.STROKE_W), foreground = rgba_black)]
 
@@ -47,18 +47,28 @@ def init_plot(x, y):
     return fig, ax, dot
 
 def setup_underlay(df, x, y, use_underlay):
-    if use_underlay and ('lapIndex' in df.columns):
-        base_mask = (df['lapIndex'] == 1)
-        if base_mask.any():
-            x_base = x[base_mask]
-            y_base = y[base_mask]
-            fig, ax, dot = init_plot(x_base, y_base)
-            for ln in list(ax.lines):
-                if ln is not dot:
-                    ln.set_linewidth(getattr(config, "TRACK_LINEWIDTH", 1.2))
-                    ln.set_color(getattr(config, "TRACK_COLOR", (0.20, 0.20, 0.20)))
-                    ln.set_alpha(getattr(config, "TRACK_ALPHA", 0.25))
-            return fig, ax, dot
+    # Draws a static map from first lap for the underlay
+    if not use_underlay:
+        return None
+
+    base_mask = (df['lapIndex'] == 1)
+    x_base = x[base_mask]
+    y_base = y[base_mask]
+
+    fig, ax, dot = init_plot(x_base, y_base)
+
+    track_lw  = config.TRACK_LINEWIDTH
+    track_col = config.TRACK_COLOR
+    track_a   = config.TRACK_ALPHA
+
+
+    for ln in list(ax.lines):
+        if ln is not dot:
+            ln.set_linewidth(track_lw)
+            ln.set_color(track_col)
+            ln.set_alpha(track_a)
+
+    return fig, ax, dot
 
 
 def build_hud(fig):
@@ -109,7 +119,7 @@ def build_hud(fig):
     lean_text = lean_ax.text(
         0.0, 0.22, '',
         ha = 'center', va = 'center',
-        fontproperties = _get_font_props(config.FONT_SIZE_LEAN),
+        fontproperties = get_font(config.FONT_SIZE_LEAN),
         color = config.TEXT_COLOR, weight = config.FONT_WEIGHT, zorder = 4,
         path_effects = stroke_effect()
     )
@@ -147,30 +157,30 @@ def build_hud(fig):
     speed_text = hud_ax.text(
         *config.SPEED_POS_REL, '', transform = hud_ax.transAxes,
         ha = 'center', va = 'center',
-        fontproperties = _get_font_props(config.FONT_SIZE_SPEED),
+        fontproperties = get_font(config.FONT_SIZE_SPEED),
         color = config.TEXT_COLOR, weight = config.FONT_WEIGHT,
         path_effects = stroke_effect()
     )
     gear_text  = hud_ax.text(
         *config.GEAR_POS_REL,  '', transform = hud_ax.transAxes,
         ha = 'center', va = 'center',
-        fontproperties = _get_font_props(config.FONT_SIZE_GEAR),
+        fontproperties = get_font(config.FONT_SIZE_GEAR),
         color = config.TEXT_COLOR, weight = config.FONT_WEIGHT,
         path_effects = stroke_effect()
     )
 
-    # Meta labels: Lap (left), Time (right)
+    # Lap (left), Time (right)
     lap_text = hud_ax.text(
         *config.LAP_POS_REL, '', transform = hud_ax.transAxes,
         ha = 'left', va = 'center',
-        fontproperties = _get_font_props(config.FONT_SIZE_META),
+        fontproperties = get_font(config.FONT_SIZE_META),
         color = config.TEXT_COLOR, weight = config.FONT_WEIGHT,
         path_effects = stroke_effect()
     )
     laptime_text = hud_ax.text(
         *config.LAPTIME_POS_REL, '', transform = hud_ax.transAxes,
         ha = 'right', va = 'center',
-        fontproperties = _get_font_props(config.FONT_SIZE_META),
+        fontproperties = get_font(config.FONT_SIZE_META),
         color = config.TEXT_COLOR, weight = config.FONT_WEIGHT,
         path_effects = stroke_effect()
     )

@@ -109,10 +109,9 @@ def make_animate(df, x, y, dot,
 
         brk_thr_bars(brake, throttle)
         update_lean(lean_ang)
-        speed_text.set_text(f"{speed_kph}")
+        speed_text.set_text(f"{speed_kph}km/h")
         gear_text.set_text(f"{gear}")
 
-        # Artists for blitting
         return (
             dot, brk_rect, thr_rect,
             left_fill, right_fill, lean_text,
