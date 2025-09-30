@@ -41,23 +41,37 @@ TRACK_ALPHA     = 0.25
 TRACK_LINEWIDTH = 1.2
 
 # Reserve bottom space so the track map and dash never overlap
-SUBPLOT_BOTTOM  = 0.4
+SUBPLOT_BOTTOM  = 0.44   # was 0.40; a tad more space
+
 # ----------------------------
 # HUD layout
 # ----------------------------
-
 # [left, bottom, width, height]
+HUD_BOX_POS   = [0.33, 0.10, 0.34, 0.35]
 
-HUD_BOX_POS   = [0.33, 0.10, 0.34, 0.35]   
+LEAN_AX_REL   = [0.15, 0.56, 0.70, 0.35]
+BARS_AX_REL   = [0.10, 0.50, 0.80, 0.09]
 
-LEAN_AX_REL   = [0.15, 0.56, 0.70, 0.35]   
-BARS_AX_REL   = [0.10, 0.5, 0.80, 0.09]   
+SPEED_POS_REL = (0.50, 0.42)
+GEAR_POS_REL  = (0.50, 0.28)
 
-SPEED_POS_REL = (0.50, 0.42)           
-GEAR_POS_REL  = (0.50, 0.28)             
+LAP_POS_REL     = (0.10, 0.15)
+LAPTIME_POS_REL = (0.90, 0.15)
 
-LAP_POS_REL     = (0.1, 0.15)         
-LAPTIME_POS_REL = (0.9, 0.15)        
+# HUD background box
+
+HUD_BG           = True                 # toggle panel
+HUD_BG_COLOR     = (0.12, 0.12, 0.12)   # dark grey
+HUD_BG_ALPHA     = 0.90
+
+# Rounded corners: fraction of the panel's short side (0..0.5).
+# Example: 0.10 ≈ pill-like; 0.02 ≈ subtle.
+HUD_BG_ROUND_FRAC = 0.1
+
+# Shrink the panel slightly inside HUD_BOX_POS so it hugs the content.
+# Fractions of HUD width/height (0..0.2 is a good range).
+HUD_BG_INSET_X   = 0.06
+HUD_BG_INSET_Y   = 0.06
 
 # ----------------------------
 # Lean geometry
@@ -65,7 +79,7 @@ LAPTIME_POS_REL = (0.9, 0.15)
 LEAN_ARC_RADIUS    = 1.00
 LEAN_ARC_LINEWIDTH = 8
 LEAN_FILL_WIDTH    = 0.18
-LEAN_EDGE_PAD_DEG  = 0.8   # avoid exact 0° and 180° to prevent raster clipping
+LEAN_EDGE_PAD_DEG  = 0.8
 LEAN_X_PAD         = 0.06
 LEAN_Y_PAD         = 0.06
 
@@ -77,9 +91,9 @@ FONT_FALLBACK   = 'DejaVu Sans'
 FONT_SIZE_SPEED = 24
 FONT_SIZE_GEAR  = 18
 FONT_SIZE_LEAN  = 21
-FONT_SIZE_META  = 13        
-FONT_WEIGHT     = 'normal'  
-STROKE_W        = 1.0       
+FONT_SIZE_META  = 13
+FONT_WEIGHT     = 'normal'
+STROKE_W        = 1.0
 STROKE_ALPHA    = 0.85
 
 # ----------------------------
@@ -90,14 +104,15 @@ THROTTLE_COLOR = 'green'
 BRAKE_COLOR    = 'red'
 
 # Lean visuals
-LEAN_RING_BG    = (0.75, 0.75, 0.75)   # grey outline arc
-LEAN_FILL_COLOR = (1.00, 0.85, 0.15)   # default yellow
+LEAN_RING_BG    = (0.75, 0.75, 0.75)
+LEAN_FILL_COLOR = (1.00, 0.85, 0.15)
 TEXT_COLOR      = 'black'
 
 # Lean color thresholds (deg)
 LEAN_LOW_DEG   = 25
 LEAN_HIGH_DEG  = 50
 
-LEAN_COLOR_LOW  = (1.0, 1.0, 1.0)      # white
-LEAN_COLOR_MID  = (1.00, 0.85, 0.15)   # yellow
-LEAN_COLOR_HIGH = (0.90, 0.20, 0.20)   # red
+LEAN_COLOR_LOW  = (1.0, 1.0, 1.0)
+LEAN_COLOR_MID  = (1.00, 0.85, 0.15)
+LEAN_COLOR_HIGH = (0.90, 0.20, 0.20)
+

@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arc, Wedge, Rectangle
+from matplotlib.patches import Arc, Wedge, Rectangle, PathPatch
 from matplotlib import patheffects as pe
 from matplotlib.font_manager import FontProperties
+from matplotlib.path import Path
 from motogp_dashboard import config
 
 def get_font(size):
-    # Accepts custom font, else uses default fallback
     if config.FONT_PATH and isinstance(config.FONT_PATH, str) and len(config.FONT_PATH.strip()) > 0:
         try:
             return FontProperties(fname = config.FONT_PATH, size = size, weight = config.FONT_WEIGHT)
@@ -14,28 +14,23 @@ def get_font(size):
     return FontProperties(family = config.FONT_FALLBACK, size = size, weight = config.FONT_WEIGHT)
 
 def stroke_effect():
-    # Text stroke effect so it reads better
     rgba_black = (0.0, 0.0, 0.0, float(config.STROKE_ALPHA))
     return [pe.withStroke(linewidth = float(config.STROKE_W), foreground = rgba_black)]
 
 def init_plot(x, y):
-    # Basic figure and track underlay
     fig, ax = plt.subplots(figsize = config.TRACK_SIZE)
     fig.subplots_adjust(bottom = config.SUBPLOT_BOTTOM)
 
-    # Track underlay line
     ax.plot(
         x, y,
         color = config.TRACK_COLOR,
         zorder = 0,
-        linewidth = getattr(config, "TRACK_LINEWIDTH", 1.2),
-        alpha = getattr(config, "TRACK_ALPHA", 0.25)
+        linewidth = config.TRACK_LINEWIDTH,
+        alpha = config.TRACK_ALPHA
     )
 
-    # Bike position marker
     dot, = ax.plot([], [], 'o', color = config.DOT_COLOR, markersize = 10, zorder = 2)
 
-    # Clean canvas
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
     ax.tick_params(left = False, bottom = False, labelleft = False, labelbottom = False)
@@ -47,7 +42,6 @@ def init_plot(x, y):
     return fig, ax, dot
 
 def setup_underlay(df, x, y, use_underlay):
-    # Draws a static map from first lap for the underlay
     if not use_underlay:
         return None
 
@@ -57,23 +51,101 @@ def setup_underlay(df, x, y, use_underlay):
 
     fig, ax, dot = init_plot(x_base, y_base)
 
-    track_lw  = config.TRACK_LINEWIDTH
-    track_col = config.TRACK_COLOR
-    track_a   = config.TRACK_ALPHA
-
-
     for ln in list(ax.lines):
         if ln is not dot:
-            ln.set_linewidth(track_lw)
-            ln.set_color(track_col)
-            ln.set_alpha(track_a)
+            ln.set_linewidth(config.TRACK_LINEWIDTH)
+            ln.set_color(config.TRACK_COLOR)
+            ln.set_alpha(config.TRACK_ALPHA)
 
     return fig, ax, dot
 
+# ----------------------------
+# Simple rounded HUD background
+# ----------------------------
+
+def hud_shape(width = 1.0, height = 1.0, r_frac = 0.08):
+    """
+    Rounded rectangle path in axes coords [0..1], radius = r_frac * min(w, h).
+    """
+    w = float(width); h = float(height)
+    r = float(r_frac) * min(w, h)
+    r = max(0.0, min(r, 0.5 * min(w, h)))
+    if r == 0.0:
+        verts = [(0,0),(w,0),(w,h),(0,h),(0,0)]
+        codes = [Path.MOVETO,Path.LINETO,Path.LINETO,Path.LINETO,Path.CLOSEPOLY]
+        return Path(verts, codes)
+
+    # Bezier kappa for quarter circle
+    k = 0.5522847498307936
+    cx = r * k; cy = r * k
+
+    x0, y0 = 0.0, 0.0
+    x1, y1 = w,   h
+
+    verts = [
+        (x0 + r, y0),                       # M
+        (x1 - r, y0),                       # L
+        (x1 - r + cx, y0), (x1, y0 + r - cy), (x1, y0 + r),          # C br
+        (x1, y1 - r),                       # L
+        (x1, y1 - r + cy), (x1 - r + cx, y1), (x1 - r, y1),          # C tr
+        (x0 + r, y1),                       # L
+        (x0 + r - cx, y1), (x0, y1 - r + cy), (x0, y1 - r),          # C tl
+        (x0, y0 + r),                       # L
+        (x0, y0 + r - cy), (x0 + r - cx, y0), (x0 + r, y0),          # C bl
+        (x0 + r, y0)                        # Z
+    ]
+    codes = [
+        Path.MOVETO,
+        Path.LINETO,
+        Path.CURVE4, Path.CURVE4, Path.CURVE4,
+        Path.LINETO,
+        Path.CURVE4, Path.CURVE4, Path.CURVE4,
+        Path.LINETO,
+        Path.CURVE4, Path.CURVE4, Path.CURVE4,
+        Path.LINETO,
+        Path.CURVE4, Path.CURVE4, Path.CURVE4,
+        Path.CLOSEPOLY
+    ]
+    return Path(verts, codes)
+
+def hud_background(fig):
+    if not getattr(config, "HUD_BG", True):
+        return
+
+    # Start from the main HUD box and shrink slightly
+    x, y, w, h = config.HUD_BOX_POS
+    inset_x = float(config.HUD_BG_INSET_X) * w
+    inset_y = float(config.HUD_BG_INSET_Y) * h
+    x0 = x + inset_x
+    y0 = y + inset_y
+    w0 = max(0.0, w - 2 * inset_x)
+    h0 = max(0.0, h - 2 * inset_y)
+
+    bg_ax = fig.add_axes([x0, y0, w0, h0], zorder = 0.05)
+    bg_ax.set_axis_off()
+
+    r_frac = float(getattr(config, "HUD_BG_ROUND_FRAC", 0.08))
+    r_frac = max(0.0, min(0.5, r_frac))
+
+    path = hud_shape(1.0, 1.0, r_frac = r_frac)
+    r, g, b = config.HUD_BG_COLOR
+    face_rgba = (r, g, b, float(config.HUD_BG_ALPHA))
+
+    panel = PathPatch(
+        path,
+        facecolor = face_rgba,
+        edgecolor = None,
+        transform = bg_ax.transAxes,
+        zorder = 0.06,
+        clip_on = False
+    )
+    bg_ax.add_patch(panel)
 
 def build_hud(fig):
 
-    hud_ax = fig.add_axes(config.HUD_BOX_POS)
+    hud_background(fig)
+
+    hud_ax = fig.add_axes(config.HUD_BOX_POS, zorder = 0.30)
     hud_ax.set_facecolor((1, 1, 1, 0))
     hud_ax.axis('off')
 
@@ -83,7 +155,7 @@ def build_hud(fig):
         config.HUD_BOX_POS[1] + config.LEAN_AX_REL[1] * config.HUD_BOX_POS[3],
         config.LEAN_AX_REL[2] * config.HUD_BOX_POS[2],
         config.LEAN_AX_REL[3] * config.HUD_BOX_POS[3]
-    ])
+    ], zorder = 0.35)
     lean_ax.set_xlim(-1.0 - float(config.LEAN_X_PAD), 1.0 + float(config.LEAN_X_PAD))
     lean_ax.set_ylim(-0.2 - float(config.LEAN_Y_PAD), 1.2 + float(config.LEAN_Y_PAD))
     lean_ax.axis('off')
@@ -92,7 +164,6 @@ def build_hud(fig):
     w_fill   = float(config.LEAN_FILL_WIDTH)
     edge_pad = float(config.LEAN_EDGE_PAD_DEG)
 
-    # Grey outline arc
     arc_bg = Arc(
         (0, 0), width = 2 * R_arc, height = 2 * R_arc,
         theta1 = 0.0 + edge_pad, theta2 = 180.0 - edge_pad,
@@ -102,7 +173,6 @@ def build_hud(fig):
     arc_bg.set_clip_on(False)
     lean_ax.add_patch(arc_bg)
 
-    # Alignment for fill wedges
     R_fill = R_arc + w_fill / 2.0
 
     left_fill  = Wedge(center = (0, 0), r = R_fill,
@@ -115,7 +185,6 @@ def build_hud(fig):
     right_fill.set_clip_on(False)
     lean_ax.add_patch(left_fill); lean_ax.add_patch(right_fill)
 
-    # Lean ang readout 
     lean_text = lean_ax.text(
         0.0, 0.22, '',
         ha = 'center', va = 'center',
@@ -130,7 +199,7 @@ def build_hud(fig):
         config.HUD_BOX_POS[1] + config.BARS_AX_REL[1] * config.HUD_BOX_POS[3],
         config.BARS_AX_REL[2] * config.HUD_BOX_POS[2],
         config.BARS_AX_REL[3] * config.HUD_BOX_POS[3]
-    ])
+    ], zorder = 0.35)
     bars_ax.set_xlim(0, 1); bars_ax.set_ylim(0, 1); bars_ax.axis('off')
 
     gap_frac  = 0.04
@@ -143,17 +212,17 @@ def build_hud(fig):
     bar_h = 0.52
     bar_y = 0.5 - bar_h / 2
 
-    # Grey outlines behind the bars
+    # Grey outlines
     bg_left  = Rectangle((left_x0,  bar_y),  left_x1 - left_x0,  bar_h, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
     bg_right = Rectangle((right_x0, bar_y),  right_x1 - right_x0, bar_h, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
     bars_ax.add_patch(bg_left); bars_ax.add_patch(bg_right)
 
-    # Brake + Throttle bars
+    # Bars
     brk_rect = Rectangle((left_x1,  bar_y), 0.0, bar_h, facecolor = config.BRAKE_COLOR,    edgecolor = None, zorder = 1)
     thr_rect = Rectangle((right_x0, bar_y), 0.0, bar_h, facecolor = config.THROTTLE_COLOR, edgecolor = None, zorder = 1)
     bars_ax.add_patch(brk_rect); bars_ax.add_patch(thr_rect)
 
-    # Speed and gear
+    # Text overlays
     speed_text = hud_ax.text(
         *config.SPEED_POS_REL, '', transform = hud_ax.transAxes,
         ha = 'center', va = 'center',
@@ -169,7 +238,6 @@ def build_hud(fig):
         path_effects = stroke_effect()
     )
 
-    # Lap (left), Time (right)
     lap_text = hud_ax.text(
         *config.LAP_POS_REL, '', transform = hud_ax.transAxes,
         ha = 'left', va = 'center',
