@@ -29,7 +29,7 @@ Thumbs.db
 
 # Data files
 data/*.csv
-!data/example_lap.csv
+
 
 # Generated media
 *.png
