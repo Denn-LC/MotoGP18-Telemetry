@@ -3,22 +3,19 @@ import numpy as np
 from motogp_dashboard import config
 
 def add_lean_angle(df):
-    """
-    Compute signed lean angle from path curvature and speed.
-    Positive = right, Negative = left. Absolute also provided for legacy uses.
-    """
+    # Calculate lean angle (degrees) from telemetry world positions
     x = df['world_position_X'].astype('float64').to_numpy()
     y = df['world_position_Y'].astype('float64').to_numpy()
     t = df['time_s'].astype('float64').to_numpy()
 
-    # strictly increasing time to avoid divide-by-zero gradients
+    # strictly increasing time to avoid divison by zero errors
     t = t + np.arange(len(t)) * 1e-9
 
     dt = np.diff(t, prepend = t[0])
     med = np.nanmedian(dt)
     dt_med = float(med) if np.isfinite(med) and med > 0 else 1.0 / 60.0
 
-    # zero-phase smoothing on positions
+    # zero phase smoothing on positions
     w_pos = int(round(config.POS_SMOOTH_S / dt_med))
     if w_pos < 5: w_pos = 5
     if w_pos % 2 == 0: w_pos += 1
@@ -71,9 +68,6 @@ def load_data():
     try:
         df = pd.read_csv(config.CSV_PATH, sep = "\t")
         print(f"Loaded {len(df)} rows from '{config.FILENAME}'")
-
-        if 'lapIndex' in df.columns:
-            df = df[df['lapIndex'] > 0].reset_index(drop = True)
 
         # Inputs
         df['throttle'] = df['throttle'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
