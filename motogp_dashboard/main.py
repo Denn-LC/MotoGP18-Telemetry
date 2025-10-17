@@ -15,7 +15,7 @@ def main():
     x = df['world_position_X']
     y = df['world_position_Y']
 
-    # Smoothed break and throttle
+    # Smoothed brake and throttle
     df['throttle_smooth'] = utils.smooth_and_limit(
         df['throttle'], df['dt'],
         alpha = config.SMOOTHING_ALPHA,
