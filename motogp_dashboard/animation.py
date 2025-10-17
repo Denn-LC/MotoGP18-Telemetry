@@ -28,33 +28,36 @@ def make_animate(df, x, y, dot,
         return config.LEAN_COLOR_MID
 
     def update_lean(lean_ang):
-        # Fill arc and text for lean angle
+
         edge_pad = float(bars_geo.get('edge_pad_deg', 0.0))
-        theta_min = 0.0 + edge_pad
-        theta_max = 180.0 - edge_pad
+        theta_min = 0.0 + edge_pad    
+        theta_max = 180.0 - edge_pad        
 
         mag  = min(abs(float(lean_ang)), max_deg)
-        span = 90.0 * (mag / max_deg)
+        span = 90.0 * (mag / max_deg) 
+        col  = lean_colour(mag)
 
-        col = lean_colour(mag)
+        # Reset both wedges to empty
+        left_fill.set_theta1(90.0);  left_fill.set_theta2(90.0)
+        right_fill.set_theta1(90.0); right_fill.set_theta2(90.0)
 
-        # Reset both wedges
-        left_fill.set_theta1(90);  left_fill.set_theta2(90)
-        right_fill.set_theta1(90); right_fill.set_theta2(90)
-
+        # Set colours
         left_fill.set_facecolor(col)
         right_fill.set_facecolor(col)
         lean_text.set_color(col)
 
-        if lean_ang >= 0:
-            t1 = max(90.0 - span, theta_min)
-            right_fill.set_theta1(t1)
-            right_fill.set_theta2(90.0)
+        # LEFT = +, RIGHT = -
+        if float(lean_ang) <= 0.0:
+            theta1 = max(90.0 - span, theta_min)
+            theta2 = 90.0
+            right_fill.set_theta1(theta1)
+            right_fill.set_theta2(theta2)
         else:
-            t2 = min(90.0 + span, theta_max)
-            left_fill.set_theta1(90.0)
-            left_fill.set_theta2(t2)
-
+            theta1 = 90.0
+            theta2 = min(90.0 + span, theta_max)
+            left_fill.set_theta1(theta1)
+            left_fill.set_theta2(theta2)
+        
         lean_text.set_text(f"{int(round(mag))}°")
 
     def brk_thr_bars(brake, throttle):
