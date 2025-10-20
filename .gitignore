@@ -29,8 +29,6 @@ Thumbs.db
 
 # Data files
 data/*.csv
-assets/*.mp4
-
 
 # Generated media
 *.png
