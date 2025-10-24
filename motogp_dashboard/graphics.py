@@ -59,14 +59,8 @@ def setup_underlay(df, x, y, use_underlay):
 
     return fig, ax, dot
 
-# ----------------------------
 # Simple rounded HUD background
-# ----------------------------
-
 def hud_shape(width = 1.0, height = 1.0, r_frac = 0.08):
-    """
-    Rounded rectangle path in axes coords [0..1], radius = r_frac * min(w, h).
-    """
     w = float(width); h = float(height)
     r = float(r_frac) * min(w, h)
     r = max(0.0, min(r, 0.5 * min(w, h)))
@@ -75,8 +69,7 @@ def hud_shape(width = 1.0, height = 1.0, r_frac = 0.08):
         codes = [Path.MOVETO,Path.LINETO,Path.LINETO,Path.LINETO,Path.CLOSEPOLY]
         return Path(verts, codes)
 
-    # Bezier kappa for quarter circle
-    k = 0.5522847498307936
+    k = config.BEZIER_KAPPA
     cx = r * k; cy = r * k
 
     x0, y0 = 0.0, 0.0
@@ -112,7 +105,7 @@ def hud_background(fig):
     if not getattr(config, "HUD_BG", True):
         return
 
-    # Start from the main HUD box and shrink slightly
+    # Start from the main HUD box and a little
     x, y, w, h = config.HUD_BOX_POS
     inset_x = float(config.HUD_BG_INSET_X) * w
     inset_y = float(config.HUD_BG_INSET_Y) * h
@@ -202,24 +195,14 @@ def build_hud(fig):
     ], zorder = 0.35)
     bars_ax.set_xlim(0, 1); bars_ax.set_ylim(0, 1); bars_ax.axis('off')
 
-    gap_frac  = 0.04
-    half_frac = 0.5
-    left_x0   = 0.0
-    left_x1   = half_frac - gap_frac * 0.5
-    right_x0  = half_frac + gap_frac * 0.5
-    right_x1  = 1.0
-
-    bar_h = 0.52
-    bar_y = 0.5 - bar_h / 2
-
     # Grey outlines
-    bg_left  = Rectangle((left_x0,  bar_y),  left_x1 - left_x0,  bar_h, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
-    bg_right = Rectangle((right_x0, bar_y),  right_x1 - right_x0, bar_h, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
+    bg_left  = Rectangle((config.LEFT_X0,  config.BAR_Y),  config.LEFT_DIFF,  config.BAR_H, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
+    bg_right = Rectangle((config.RIGHT_X0, config.BAR_Y),  config.RIGHT_DIFF, config.BAR_H, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
     bars_ax.add_patch(bg_left); bars_ax.add_patch(bg_right)
 
     # Bars
-    brk_rect = Rectangle((left_x1,  bar_y), 0.0, bar_h, facecolor = config.BRAKE_COLOR,    edgecolor = None, zorder = 1)
-    thr_rect = Rectangle((right_x0, bar_y), 0.0, bar_h, facecolor = config.THROTTLE_COLOR, edgecolor = None, zorder = 1)
+    brk_rect = Rectangle((config.LEFT_X0,  config.BAR_Y), 0.0, config.BAR_H, facecolor = config.BRAKE_COLOR,    edgecolor = None, zorder = 1)
+    thr_rect = Rectangle((config.RIGHT_X0, config.BAR_Y), 0.0, config.BAR_H, facecolor = config.THROTTLE_COLOR, edgecolor = None, zorder = 1)
     bars_ax.add_patch(brk_rect); bars_ax.add_patch(thr_rect)
 
     # Text overlays
@@ -254,12 +237,12 @@ def build_hud(fig):
     )
 
     bars_geo = {
-        'left_edge'   : left_x1,
-        'left_min'    : left_x0,
-        'right_edge'  : right_x0,
-        'right_max'   : right_x1,
-        'bar_y'       : bar_y,
-        'bar_h'       : bar_h,
+        'left_edge'   : config.LEFT_X1,
+        'left_min'    : config.LEFT_X0,
+        'right_edge'  : config.RIGHT_X0,
+        'right_max'   : config.RIGHT_X1,
+        'bar_y'       : config.BAR_Y,
+        'bar_h'       : config.BAR_H,
         'edge_pad_deg': float(config.LEAN_EDGE_PAD_DEG)
     }
 

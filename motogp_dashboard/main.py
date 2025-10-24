@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 from motogp_dashboard import data_load
-from motogp_dashboard import plot
+from motogp_dashboard import graphics
 from motogp_dashboard import animation
 from motogp_dashboard import utils
 from motogp_dashboard import config
@@ -28,9 +28,9 @@ def main():
     )
 
     # Figure
-    fig_ax = plot.setup_underlay(df, x, y, getattr(config, "TRACK_UNDERLAY", True))
+    fig_ax = graphics.setup_underlay(df, x, y, getattr(config, "TRACK_UNDERLAY", True))
     if fig_ax is None:
-        fig, ax, dot = plot.init_plot(x, y)
+        fig, ax, dot = graphics.init_plot(x, y)
     else:
         fig, ax, dot = fig_ax
 
@@ -40,7 +40,7 @@ def main():
         brk_rect, thr_rect, speed_text, gear_text,
         lap_text, laptime_text,
         bars_geo
-    ) = plot.hud(fig, ax)
+    ) = graphics.hud(fig, ax)
 
     # Animation
     animate = animation.make_animate(

@@ -39,9 +39,7 @@ TRACK_UNDERLAY  = True
 TRACK_COLOR     = (0.20, 0.20, 0.20)
 TRACK_ALPHA     = 0.25
 TRACK_LINEWIDTH = 1.2
-
-# Reserve bottom space so the track map and dash never overlap
-SUBPLOT_BOTTOM  = 0.44   # was 0.40; a tad more space
+SUBPLOT_BOTTOM  = 0.44 # Reserve space for the track map
 
 # ----------------------------
 # HUD layout
@@ -58,24 +56,28 @@ GEAR_POS_REL  = (0.50, 0.28)
 LAP_POS_REL     = (0.10, 0.15)
 LAPTIME_POS_REL = (0.90, 0.15)
 
-# HUD background box
-
 HUD_BG           = True                 # toggle panel
 HUD_BG_COLOR     = (0.12, 0.12, 0.12)   # dark grey
 HUD_BG_ALPHA     = 0.90
-
-# Rounded corners: fraction of the panel's short side (0..0.5).
-# Example: 0.10 ≈ pill-like; 0.02 ≈ subtle.
-HUD_BG_ROUND_FRAC = 0.1
-
-# Shrink the panel slightly inside HUD_BOX_POS so it hugs the content.
-# Fractions of HUD width/height (0..0.2 is a good range).
+HUD_BG_ROUND_FRAC = 0.1 # size of the rounded corners
 HUD_BG_INSET_X   = 0.06
 HUD_BG_INSET_Y   = 0.06
+BEZIER_KAPPA     = 0.5522847498307936
 
-# ----------------------------
+# Grey outline geometry
+GAP_FRAC   = 0.04
+HALF_FRAC  = 0.5
+LEFT_X0    = 0.0
+LEFT_X1    = HALF_FRAC - (GAP_FRAC * 0.5)
+LEFT_DIFF  = LEFT_X1 - LEFT_X1
+RIGHT_X0   = HALF_FRAC + (GAP_FRAC * 0.5)
+RIGHT_X1   = 1.0
+RIGHT_DIFF = RIGHT_X1 - RIGHT_X0
+
+BAR_H = 0.52
+BAR_Y = 0.5 - (BAR_H * 0.5)
+
 # Lean geometry
-# ----------------------------
 LEAN_ARC_RADIUS    = 1.00
 LEAN_ARC_LINEWIDTH = 8
 LEAN_FILL_WIDTH    = 0.18
@@ -83,9 +85,7 @@ LEAN_EDGE_PAD_DEG  = 0.8
 LEAN_X_PAD         = 0.06
 LEAN_Y_PAD         = 0.06
 
-# ----------------------------
 # Text and fonts
-# ----------------------------
 FONT_PATH       = None
 FONT_FALLBACK   = 'DejaVu Sans'
 FONT_SIZE_SPEED = 24
@@ -96,9 +96,7 @@ FONT_WEIGHT     = 'normal'
 STROKE_W        = 1.0
 STROKE_ALPHA    = 0.85
 
-# ----------------------------
 # Colors
-# ----------------------------
 DOT_COLOR      = 'red'
 THROTTLE_COLOR = 'green'
 BRAKE_COLOR    = 'red'
@@ -115,4 +113,3 @@ LEAN_HIGH_DEG  = 50
 LEAN_COLOR_LOW  = (1.0, 1.0, 1.0)
 LEAN_COLOR_MID  = (1.00, 0.85, 0.15)
 LEAN_COLOR_HIGH = (0.90, 0.20, 0.20)
-
