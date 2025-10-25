@@ -9,7 +9,7 @@ A data visualization tool for the MotoGP 18 video game.
 Telemetry CSVs were exported from *MotoGP 18* using the [Sim Racing Telemetry](https://store.steampowered.com/app/845210/Sim_Racing_Telemetry/) tool on Steam
 
 ## Demo
-
+(Slightly older version)
 https://github.com/user-attachments/assets/c14ef42e-a907-40bf-853e-a7af971395f3
 
 ## Requirements
