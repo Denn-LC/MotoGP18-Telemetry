@@ -17,7 +17,7 @@ def smooth_and_limit(series, dt, alpha, rate_up, rate_down):
     out = np.empty_like(sig, dtype = float)
     out[0] = float(sig[0])
     for i in range(1, len(sig)):
-        max_up   = rate_up   * float(dtv[i])
+        max_up = rate_up * float(dtv[i])
         max_down = rate_down * float(dtv[i])
         delta = sig[i] - out[i - 1]
         if delta > 0:

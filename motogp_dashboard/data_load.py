@@ -25,8 +25,8 @@ def add_lean_angle(df):
     ys = pd.Series(y).rolling(window = w_pos, center = True, min_periods = 1).median() \
                      .rolling(window = w_pos, center = True, min_periods = 1).mean().to_numpy()
 
-    dx  = np.gradient(xs, t, edge_order = 2)
-    dy  = np.gradient(ys, t, edge_order = 2)
+    dx = np.gradient(xs, t, edge_order = 2)
+    dy = np.gradient(ys, t, edge_order = 2)
     ddx = np.gradient(dx,  t, edge_order = 2)
     ddy = np.gradient(dy,  t, edge_order = 2)
 
@@ -37,9 +37,9 @@ def add_lean_angle(df):
 
     speed = df['speed_mps'].astype('float64').to_numpy()
 
-    a_lat     = (speed ** 2) * kappa
-    phi_rad   = np.arctan2(a_lat, 9.81)
-    lean_deg  = np.degrees(phi_rad)
+    a_lat = (speed ** 2) * kappa
+    phi_rad = np.arctan2(a_lat, 9.81)
+    lean_deg = np.degrees(phi_rad)
 
     lean_deg[speed < float(config.MIN_SPEED_MS)] = 0.0
     lean_deg = np.clip(lean_deg, -float(config.MAX_DEG), float(config.MAX_DEG))
@@ -54,14 +54,13 @@ def add_lean_angle(df):
                                  .rolling(window = w_lean, center = True, min_periods = 1).mean().to_numpy()
 
     df['lean_deg_signed'] = lean_deg
-    df['lean_deg']        = np.abs(lean_deg)
+    df['lean_deg'] = np.abs(lean_deg)
     return df
 
 def add_lap_time(df):
     df['lapIndex'] = df['lapIndex'].round().astype('Int64').ffill().bfill().astype(int)
     df['lap_time_s'] = df.groupby('lapIndex')['dt'].cumsum().shift(fill_value = 0.0)
     return df
-
 
 def load_data():
     try:
@@ -70,8 +69,8 @@ def load_data():
 
         # Inputs
         df['throttle'] = df['throttle'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
-        df['brake_0']  = df['brake_0'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
-        df['rpm']      = df['rpm'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(lower = 0)
+        df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
+        df['rpm'] = df['rpm'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(lower = 0)
 
         df['gear'] = df['gear'].replace(-1, np.nan).ffill().bfill().round().clip(1, 6).astype(int)
 
@@ -90,7 +89,7 @@ def load_data():
         # Timing
         bin_index_diff = df['binIndex'].diff()
         df['dt_raw'] = (bin_index_diff.fillna(1) * config.DT_PER_TICK).clip(lower = 0)
-        df['dt']     = df['dt_raw'].clip(lower = config.MIN_DT, upper = config.MAX_DT)
+        df['dt'] = df['dt_raw'].clip(lower = config.MIN_DT, upper = config.MAX_DT)
         df['time_s'] = df['dt_raw'].cumsum()
 
         # Speed

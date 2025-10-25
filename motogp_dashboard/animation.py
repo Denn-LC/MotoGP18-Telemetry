@@ -33,11 +33,11 @@ def make_animate(df, x, y, dot,
         theta_min = 0.0 + edge_pad    
         theta_max = 180.0 - edge_pad        
 
-        mag  = min(abs(float(lean_ang)), max_deg)
+        mag = min(abs(float(lean_ang)), max_deg)
         span = 90.0 * (mag / max_deg) 
-        col  = lean_colour(mag)
+        col = lean_colour(mag)
 
-        # Reset both wedges to empty
+        # Reset both wedges to 0
         left_fill.set_theta1(90.0);  left_fill.set_theta2(90.0)
         right_fill.set_theta1(90.0); right_fill.set_theta2(90.0)
 
@@ -65,15 +65,15 @@ def make_animate(df, x, y, dot,
         brk_rect.set_facecolor(config.BRAKE_COLOR)
         thr_rect.set_facecolor(config.THROTTLE_COLOR)
 
-        brake    = max(0.0, min(1.0, float(brake)))
+        brake = max(0.0, min(1.0, float(brake)))
         throttle = max(0.0, min(1.0, float(throttle)))
 
-        left_edge   = bars_geo['left_edge']
-        left_min    = bars_geo['left_min']
-        right_edge  = bars_geo['right_edge']
-        right_max   = bars_geo['right_max']
-        bar_y       = bars_geo['bar_y']
-        bar_h       = bars_geo['bar_h']
+        left_edge = bars_geo['left_edge']
+        left_min = bars_geo['left_min']
+        right_edge = bars_geo['right_edge']
+        right_max = bars_geo['right_max']
+        bar_y = bars_geo['bar_y']
+        bar_h = bars_geo['bar_h']
 
         # Brake grows to the left
         max_left_width = left_edge - left_min
@@ -96,17 +96,17 @@ def make_animate(df, x, y, dot,
         dot.set_data([x.iloc[i]], [y.iloc[i]])
 
         # Readouts
-        throttle  = df['throttle_smooth'].iloc[i]
-        brake     = df['brake_smooth'].iloc[i]
+        throttle = df['throttle_smooth'].iloc[i]
+        brake = df['brake_smooth'].iloc[i]
         speed_kph = int(df['speed_kph'].iloc[i])
-        gear      = int(df['gear'].iloc[i])
+        gear = int(df['gear'].iloc[i])
 
         # Lean angle
         lean_ang = df['lean_deg_signed'].iloc[i]
 
         # Lap and live lap time
         lap_val = int(df['lapIndex'].iloc[i])
-        t_s     = float(df['lap_time_s'].iloc[i])
+        t_s = float(df['lap_time_s'].iloc[i])
         lap_text.set_text(f"Lap {lap_val}")
         laptime_text.set_text(utils.format_time(t_s))
 

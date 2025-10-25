@@ -153,8 +153,8 @@ def build_hud(fig):
     lean_ax.set_ylim(-0.2 - float(config.LEAN_Y_PAD), 1.2 + float(config.LEAN_Y_PAD))
     lean_ax.axis('off')
 
-    R_arc    = float(config.LEAN_ARC_RADIUS)
-    w_fill   = float(config.LEAN_FILL_WIDTH)
+    R_arc = float(config.LEAN_ARC_RADIUS)
+    w_fill = float(config.LEAN_FILL_WIDTH)
     edge_pad = float(config.LEAN_EDGE_PAD_DEG)
 
     arc_bg = Arc(
@@ -168,7 +168,7 @@ def build_hud(fig):
 
     R_fill = R_arc + w_fill / 2.0
 
-    left_fill  = Wedge(center = (0, 0), r = R_fill,
+    left_fill = Wedge(center = (0, 0), r = R_fill,
                        theta1 = 90, theta2 = 90, width = w_fill,
                        facecolor = config.LEAN_FILL_COLOR, edgecolor = None, zorder = 2)
     right_fill = Wedge(center = (0, 0), r = R_fill,
@@ -196,7 +196,7 @@ def build_hud(fig):
     bars_ax.set_xlim(0, 1); bars_ax.set_ylim(0, 1); bars_ax.axis('off')
 
     # Grey outlines
-    bg_left  = Rectangle((config.LEFT_X0,  config.BAR_Y),  config.LEFT_DIFF,  config.BAR_H, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
+    bg_left = Rectangle((config.LEFT_X0,  config.BAR_Y),  config.LEFT_DIFF,  config.BAR_H, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
     bg_right = Rectangle((config.RIGHT_X0, config.BAR_Y),  config.RIGHT_DIFF, config.BAR_H, facecolor = (0.90, 0.90, 0.90), edgecolor = None, zorder = 0)
     bars_ax.add_patch(bg_left); bars_ax.add_patch(bg_right)
 
@@ -213,7 +213,7 @@ def build_hud(fig):
         color = config.TEXT_COLOR, weight = config.FONT_WEIGHT,
         path_effects = stroke_effect()
     )
-    gear_text  = hud_ax.text(
+    gear_text = hud_ax.text(
         *config.GEAR_POS_REL,  '', transform = hud_ax.transAxes,
         ha = 'center', va = 'center',
         fontproperties = get_font(config.FONT_SIZE_GEAR),
@@ -237,12 +237,12 @@ def build_hud(fig):
     )
 
     bars_geo = {
-        'left_edge'   : config.LEFT_X1,
-        'left_min'    : config.LEFT_X0,
-        'right_edge'  : config.RIGHT_X0,
-        'right_max'   : config.RIGHT_X1,
-        'bar_y'       : config.BAR_Y,
-        'bar_h'       : config.BAR_H,
+        'left_edge' : config.LEFT_X1,
+        'left_min' : config.LEFT_X0,
+        'right_edge' : config.RIGHT_X0,
+        'right_max' : config.RIGHT_X1,
+        'bar_y' : config.BAR_Y,
+        'bar_h' : config.BAR_H,
         'edge_pad_deg': float(config.LEAN_EDGE_PAD_DEG)
     }
 
