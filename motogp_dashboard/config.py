@@ -44,10 +44,10 @@ SUBPLOT_BOTTOM  = 0.44 # Reserve space for the track map
 SF_LEN_REL           = 0.070
 SF_WIDTH             = 2.0      
 SF_SEGMENTS          = 10         
-SF_COLORS            = ((0.05, 0.05, 0.05), (0.95, 0.95, 0.95))  # black and white
+SF_COLORS            = ((0.05, 0.05, 0.05), (0.95, 0.95, 0.95)) # black and white
 SF_LABEL             = "S/F"
 SF_LABEL_SIZE        = 9
-SF_LABEL_OFFSET_REL  = 0.060     # offset along the normal, relative to span
+SF_LABEL_OFFSET_REL  = 0.060 # offset along the normal, relative to span
 
 
 
