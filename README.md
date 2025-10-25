@@ -10,7 +10,11 @@ Telemetry CSVs were exported from *MotoGP 18* using the [Sim Racing Telemetry](h
 
 ## Demo
 (Slightly older version)
-https://github.com/user-attachments/assets/c14ef42e-a907-40bf-853e-a7af971395f3
+
+
+https://github.com/user-attachments/assets/ff79f01f-73f2-4874-93cf-a2323621c336
+
+
 
 ## Requirements
 - Python 3.13.5
