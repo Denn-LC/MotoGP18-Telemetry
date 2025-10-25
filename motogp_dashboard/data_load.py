@@ -58,11 +58,10 @@ def add_lean_angle(df):
     return df
 
 def add_lap_time(df):
-    if 'lapIndex' in df.columns:
-        df['lap_time_s'] = df['time_s'] - df.groupby('lapIndex')['time_s'].transform('min')
-    else:
-        df['lap_time_s'] = df['time_s']
+    df['lapIndex'] = df['lapIndex'].round().astype('Int64').ffill().bfill().astype(int)
+    df['lap_time_s'] = df.groupby('lapIndex')['dt'].cumsum().shift(fill_value = 0.0)
     return df
+
 
 def load_data():
     try:
