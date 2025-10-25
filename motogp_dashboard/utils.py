@@ -8,9 +8,9 @@ def format_time(t_s):
     return f"{mins:d}:{secs:06.3f}"
 
 def smooth_and_limit(series, dt, alpha, rate_up, rate_down):
-    # EMA
+    # EMA (Exponential Moving Average)
     ema = series.ewm(alpha = alpha, adjust = False).mean().clip(0, 1)
-    # Slew
+    # Slew rate limiting
     sig = ema.to_numpy()
     dtv = dt.to_numpy()
 
@@ -24,7 +24,7 @@ def smooth_and_limit(series, dt, alpha, rate_up, rate_down):
             delta = min(delta, max_up)
         else:
             delta = max(delta, -max_down)
-            out[i] = out[i - 1] + delta
+        out[i] = out[i - 1] + delta
     return np.clip(out, 0.0, 1.0)
 
 
