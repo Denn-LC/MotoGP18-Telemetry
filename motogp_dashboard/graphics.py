@@ -37,7 +37,7 @@ def init_plot(x, y):
     for spine in ax.spines.values():
         spine.set_visible(False)
     ax.axis('equal'); ax.grid(False)
-    ax.set_title("MotoGP18 Lap Simulation")
+    ax.set_title("MotoGP18 Lap Simulation - Denn-LC")
 
     return fig, ax, dot
 
