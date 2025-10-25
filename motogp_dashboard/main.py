@@ -28,7 +28,7 @@ def main():
     )
 
     # Figure
-    fig_ax = graphics.setup_underlay(df, x, y, getattr(config, "TRACK_UNDERLAY", True))
+    fig_ax = graphics.setup_underlay(df, x, y)
     if fig_ax is None:
         fig, ax, dot = graphics.init_plot(x, y)
     else:

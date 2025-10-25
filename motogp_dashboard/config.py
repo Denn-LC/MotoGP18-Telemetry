@@ -35,11 +35,21 @@ MAX_DT      = 0.20
 # Figure / track
 # ----------------------------
 TRACK_SIZE      = (6.8, 6.8)
-TRACK_UNDERLAY  = True
 TRACK_COLOR     = (0.20, 0.20, 0.20)
 TRACK_ALPHA     = 0.25
 TRACK_LINEWIDTH = 1.2
 SUBPLOT_BOTTOM  = 0.44 # Reserve space for the track map
+
+# Start/Fin flag
+SF_LEN_REL           = 0.070
+SF_WIDTH             = 2.0      
+SF_SEGMENTS          = 10         
+SF_COLORS            = ((0.05, 0.05, 0.05), (0.95, 0.95, 0.95))  # black and white
+SF_LABEL             = "S/F"
+SF_LABEL_SIZE        = 9
+SF_LABEL_OFFSET_REL  = 0.060     # offset along the normal, relative to span
+
+
 
 # ----------------------------
 # HUD layout
@@ -56,7 +66,6 @@ GEAR_POS_REL  = (0.50, 0.28)
 LAP_POS_REL     = (0.10, 0.15)
 LAPTIME_POS_REL = (0.90, 0.15)
 
-HUD_BG           = True                 # toggle panel
 HUD_BG_COLOR     = (0.12, 0.12, 0.12)   # dark grey
 HUD_BG_ALPHA     = 0.90
 HUD_BG_ROUND_FRAC = 0.1 # size of the rounded corners

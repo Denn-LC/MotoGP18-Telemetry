@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Arc, Wedge, Rectangle, PathPatch
 from matplotlib import patheffects as pe
 from matplotlib.font_manager import FontProperties
@@ -41,10 +42,53 @@ def init_plot(x, y):
 
     return fig, ax, dot
 
-def setup_underlay(df, x, y, use_underlay):
-    if not use_underlay:
-        return None
+def draw_start_finish(ax, x, y):
+    xs = x.to_numpy()
+    ys = y.to_numpy()
 
+    tx = xs[1] - xs[0]
+    ty = ys[1] - ys[0]
+    inv = 1.0 / float(np.hypot(tx, ty))
+    tx *= inv; ty *= inv
+
+    nx = -ty
+    ny =  tx
+
+    span_x = float(xs.max() - xs.min())
+    span_y = float(ys.max() - ys.min())
+    span = 0.5 * (span_x + span_y)
+
+    L = span * float(config.SF_LEN_REL)
+    n = int(config.SF_SEGMENTS)
+    seg = L / n
+
+    px = xs[0]; py = ys[0]
+
+    # Draw checkered flag
+    for i in range(n):
+        s0 = -0.5 * L + i * seg
+        s1 = s0 + seg
+        x0 = px + nx * s0; y0 = py + ny * s0
+        x1 = px + nx * s1; y1 = py + ny * s1
+        col = config.SF_COLORS[i % 2]
+        ax.plot([x0, x1], [y0, y1],
+                color = col, linewidth = float(config.SF_WIDTH),
+                solid_capstyle = 'butt', zorder = 3)
+
+    # Start/Finish text
+    off = span * float(config.SF_LABEL_OFFSET_REL)
+    ax.text(
+        px + nx * (0.5 * L + off),
+        py + ny * (0.5 * L + off),
+        config.SF_LABEL,
+        ha = 'center', va = 'center',
+        fontproperties = get_font(config.SF_LABEL_SIZE),
+        color = config.TEXT_COLOR,
+        path_effects = stroke_effect(),
+        zorder = 4
+    )
+
+def setup_underlay(df, x, y):
     base_mask = (df['lapIndex'] == 1)
     x_base = x[base_mask]
     y_base = y[base_mask]
@@ -56,6 +100,8 @@ def setup_underlay(df, x, y, use_underlay):
             ln.set_linewidth(config.TRACK_LINEWIDTH)
             ln.set_color(config.TRACK_COLOR)
             ln.set_alpha(config.TRACK_ALPHA)
+
+    draw_start_finish(ax, x_base, y_base)
 
     return fig, ax, dot
 
@@ -102,9 +148,6 @@ def hud_shape(width = 1.0, height = 1.0, r_frac = 0.08):
     return Path(verts, codes)
 
 def hud_background(fig):
-    if not getattr(config, "HUD_BG", True):
-        return
-
     # Start from the main HUD box and a little
     x, y, w, h = config.HUD_BOX_POS
     inset_x = float(config.HUD_BG_INSET_X) * w
