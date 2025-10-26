@@ -41,7 +41,9 @@ python -m motogp_dashboard.main
 
 ## Credits and Acknowledgements
 Developed by Dennison Leadbetter-Clarke
+
 Telemetry CSVs were exported from *MotoGP 18* using the [Sim Racing Telemetry](https://store.steampowered.com/app/845210/Sim_Racing_Telemetry/) tool on Steam
+
 Project created for portfolio demonstration purposes
 
 This project also benefit from feedback and testing from a few university peers, whose input helped refine the project, thank you!
@@ -50,4 +52,5 @@ This project also benefit from feedback and testing from a few university peers,
 **v1.0 Final release**
 
 This version represents the completed showcase build of the project
+
 Additional features such as adjustable playback speed or expanded telemetry overlays may be added in future updates
