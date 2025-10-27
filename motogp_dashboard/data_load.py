@@ -41,6 +41,7 @@ def add_lean_angle(df):
     phi_rad = np.arctan2(a_lat, 9.81)
     lean_deg = np.degrees(phi_rad)
 
+    # Clean up nans, low speed and clip
     lean_deg[speed < float(config.MIN_SPEED_MS)] = 0.0
     lean_deg = np.clip(lean_deg, -float(config.MAX_DEG), float(config.MAX_DEG))
     lean_deg = np.nan_to_num(lean_deg, nan = 0.0, posinf = 0.0, neginf = 0.0)
