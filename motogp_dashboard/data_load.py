@@ -8,14 +8,14 @@ def add_lean_angle(df):
     y = df['world_position_Y'].astype('float64').to_numpy()
     t = df['time_s'].astype('float64').to_numpy()
 
-    # strictly increasing time to avoid divison by zero errors
+    # enforce monotonically increasing time
     t = t + np.arange(len(t)) * 1e-9
 
     dt = np.diff(t, prepend = t[0])
     med = np.nanmedian(dt)
     dt_med = float(med) if np.isfinite(med) and med > 0 else 1.0 / 60.0
 
-    # zero phase smoothing on positions
+    # smoothing on positions
     w_pos = int(round(config.POS_SMOOTH_S / dt_med))
     if w_pos < 5: w_pos = 5
     if w_pos % 2 == 0: w_pos += 1
@@ -71,6 +71,7 @@ def load_data():
         # Inputs
         df['throttle'] = df['throttle'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
         df['brake_0'] = df['brake_0'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(0, 1)
+        # RPM kept for possible future use
         df['rpm'] = df['rpm'].replace(-1.0, np.nan).interpolate(limit = config.INTERPOLATE_LIMIT, limit_direction = 'both').clip(lower = 0)
 
         df['gear'] = df['gear'].replace(-1, np.nan).ffill().bfill().round().clip(1, 6).astype(int)
